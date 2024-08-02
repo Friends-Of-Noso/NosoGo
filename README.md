@@ -1,2 +1,2 @@
 # NosoGo
-An implementation in Go of a Noso cryptocoin node.
+A node implementation in Go for the Noso cryptocoin.
