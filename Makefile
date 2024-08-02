@@ -23,12 +23,12 @@ NOSOGO_RELEASE64 := nosogo-$(VERSION)-$(GOOS)_amd64
 all: target release-all install
 
 core-stratumd:
-	@echo "Building nosogo to cmd/nosogo/nosogod"
-	@go build $(BUILD_FLAGS) -o cmd/nosogo/nosogod cmd/nosogo/main.go
+	@echo "Building nosogod to cmd/nosogod/nosogod"
+	@go build $(BUILD_FLAGS) -o cmd/nosogod/nosogod cmd/nosogod/main.go
 
 install:
-	@echo "Installing nossogo to $(GOPATH)/bin"
-	@go install ./cmd/nosogo
+	@echo "Installing nossogod to $(GOPATH)/bin"
+	@go install ./cmd/nosogod
 
 target:
 	mkdir -p $@
@@ -55,14 +55,14 @@ release-all: clean
 
 clean:
 	@echo "Cleaning binaries built..."
-	@rm -rf cmd/nosogo/nosogod
+	@rm -rf cmd/nosogod/nosogod
 	@rm -rf target
 	@rm -rf $(GOPATH)/bin/nosogod
 	@echo "Cleaning temp test data..."
 	@echo "Done."
 
 target/$(NOSOGOD_BINARY64):
-	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogo/main.go
+	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogod/main.go
 
 #test:
 #	@echo "====> Running go test"

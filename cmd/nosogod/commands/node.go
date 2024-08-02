@@ -24,31 +24,31 @@ func init() {
 
 	// Cobra supports Persistent Flags which will work for this command
 	// and all subcommands, e.g.:
-	// serveCmd.PersistentFlags().String("foo", "", "A help for foo")
+	// nodeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	/*serveCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
+	/*nodeCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
 
-	serveCmd.Flags().String(cAPIAddressFlag, config.API.Address, "API address")
-	viper.BindPFlag("api.address", serveCmd.Flags().Lookup(cAPIAddressFlag))
+	nodeCmd.Flags().String(cAPIAddressFlag, config.API.Address, "API address")
+	viper.BindPFlag("api.address", nodeCmd.Flags().Lookup(cAPIAddressFlag))
 
-	serveCmd.Flags().Int(cAPIPortFlag, config.API.Port, "API port")
-	viper.BindPFlag("api.port", serveCmd.Flags().Lookup(cAPIPortFlag))
+	nodeCmd.Flags().Int(cAPIPortFlag, config.API.Port, "API port")
+	viper.BindPFlag("api.port", nodeCmd.Flags().Lookup(cAPIPortFlag))
 
-	serveCmd.Flags().String(cAPIAccessTokenFlag, config.API.AccessToken, "API access token")
-	viper.BindPFlag("api.access_token", serveCmd.Flags().Lookup(cAPIAccessTokenFlag))
+	nodeCmd.Flags().String(cAPIAccessTokenFlag, config.API.AccessToken, "API access token")
+	viper.BindPFlag("api.access_token", nodeCmd.Flags().Lookup(cAPIAccessTokenFlag))
 
-	serveCmd.Flags().String(cStratumAddressFlag, config.Stratum.Address, "Stratum address")
-	viper.BindPFlag("stratum.address", serveCmd.Flags().Lookup(cStratumAddressFlag))
+	nodeCmd.Flags().String(cStratumAddressFlag, config.Stratum.Address, "Stratum address")
+	viper.BindPFlag("stratum.address", nodeCmd.Flags().Lookup(cStratumAddressFlag))
 
-	serveCmd.Flags().Int(cStratumPortFlag, config.Stratum.Port, "Stratum port")
-	viper.BindPFlag("stratum.port", serveCmd.Flags().Lookup(cStratumPortFlag))
+	nodeCmd.Flags().Int(cStratumPortFlag, config.Stratum.Port, "Stratum port")
+	viper.BindPFlag("stratum.port", nodeCmd.Flags().Lookup(cStratumPortFlag))
 
-	serveCmd.Flags().Int(cStratumMaxConnectionsFlag, config.Stratum.MaxConnections, "Stratum Max Connections")
-	viper.BindPFlag("stratum.max_connections", serveCmd.Flags().Lookup(cStratumMaxConnectionsFlag))*/
+	nodeCmd.Flags().Int(cStratumMaxConnectionsFlag, config.Stratum.MaxConnections, "Stratum Max Connections")
+	viper.BindPFlag("stratum.max_connections", nodeCmd.Flags().Lookup(cStratumMaxConnectionsFlag))*/
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	// nodeCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func runNode(cmd *cobra.Command, args []string) {
