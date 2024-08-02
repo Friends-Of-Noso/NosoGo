@@ -2,9 +2,9 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	//log "github.com/EIYARO-Project/core-stratumd/logger"
-	//"github.com/EIYARO-Project/core-stratumd/server"
-	//fs "github.com/EIYARO-Project/core-stratumd/utils"
+	//log "github.com/Friends-Of-Noso/NosoGo/logger"
+	//"github.com/Friends-Of-Noso/NosoGo/network"
+	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 // nodeCmd represents the node command

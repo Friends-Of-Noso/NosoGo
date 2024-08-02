@@ -4,8 +4,8 @@ import (
 	"github.com/spf13/cobra"
 	//ms "github.com/mitchellh/mapstructure"
 	//toml "github.com/pelletier/go-toml/v2"
-	//log "github.com/EIYARO-Project/core-stratumd/logger"
-	//fs "github.com/EIYARO-Project/core-stratumd/utils"
+	//log "github.com/Friends-Of-Noso/NosoGo/logger"
+	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 // initCmd represents the init command

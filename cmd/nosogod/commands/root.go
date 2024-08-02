@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	//cfg "github.com/EIYARO-Project/core-stratumd/config"
-	//log "github.com/EIYARO-Project/core-stratumd/logger"
-	//fs "github.com/EIYARO-Project/core-stratumd/utils"
+	//cfg "github.com/Friends-Of-Noso/NosoGo/config"
+	//log "github.com/Friends-Of-Noso/NosoGo/logger"
+	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
 	ver "github.com/Friends-Of-Noso/NosoGo/version"
 )
 
@@ -19,7 +19,7 @@ const (
 
 var (
 	//config   = cfg.DefaultConfig()
-	cfgFile  string
+	//cfgFile  string
 	logLevel string
 )
 
