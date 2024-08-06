@@ -1,9 +1,9 @@
 package utils
 
 type PascalShortString struct {
-	capacity int
-	length   int
-	bytes    []byte
+	//capacity int
+	length int
+	bytes  []byte
 }
 
 func NewPascalShortString(content string, capacity int) *PascalShortString {
@@ -17,9 +17,8 @@ func NewPascalShortString(content string, capacity int) *PascalShortString {
 		bytes[i] = contentBytes[i]
 	}
 	return &PascalShortString{
-		capacity: capacity,
-		length:   len(content),
-		bytes:    bytes,
+		length: len(content),
+		bytes:  bytes,
 	}
 }
 
@@ -37,22 +36,22 @@ func (pss *PascalShortString) Len() int {
 }
 
 func (pss *PascalShortString) Capacity() int {
-	return pss.capacity
+	return cap(pss.bytes)
 }
 
 func (pss *PascalShortString) NewContent(content string) {
 	contentBytes := []byte(content)
 	if len(content) > 0 {
 		for i := 0; i < len(content); i++ {
-			if i == pss.capacity {
+			if i == cap(pss.bytes) {
 				break
 			}
 			pss.bytes[i] = contentBytes[i]
 		}
 	}
-	if len(content) <= pss.capacity {
+	if len(content) <= cap(pss.bytes) {
 		pss.length = len(content)
 	} else {
-		pss.length = pss.capacity
+		pss.length = cap(pss.bytes)
 	}
 }
