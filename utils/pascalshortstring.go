@@ -7,10 +7,19 @@ type PascalShortString struct {
 }
 
 func NewPascalShortString(content string, capacity int) *PascalShortString {
+	// TODO: Should all bytes on the slice be 0 to start with?
+	bytes := make([]byte, capacity)
+	contentBytes := []byte(content)
+	for i := 0; i < len(content); i++ {
+		if i == capacity {
+			break
+		}
+		bytes[i] = contentBytes[i]
+	}
 	return &PascalShortString{
 		capacity: capacity,
 		length:   len(content),
-		bytes:    []byte(content),
+		bytes:    bytes,
 	}
 }
 
@@ -32,8 +41,18 @@ func (pss *PascalShortString) Capacity() int {
 }
 
 func (pss *PascalShortString) NewContent(content string) {
-	var bytes = []byte(content)
-	for i := 0; i < pss.capacity; i++ {
-		pss.bytes[i] = bytes[i]
+	contentBytes := []byte(content)
+	if len(content) > 0 {
+		for i := 0; i < len(content); i++ {
+			if i == pss.capacity {
+				break
+			}
+			pss.bytes[i] = contentBytes[i]
+		}
+	}
+	if len(content) <= pss.capacity {
+		pss.length = len(content)
+	} else {
+		pss.length = pss.capacity
 	}
 }

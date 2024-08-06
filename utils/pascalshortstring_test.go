@@ -29,3 +29,16 @@ func TestNewPascalShortString(t *testing.T) {
 		t.Fatalf("Capacity is not 10 but is %d", nps.Capacity())
 	}
 }
+
+// TODO: Add test for new content
+func TestPascalShortStringNewContent(t *testing.T) {
+	pss := NewPascalShortString("abc", 5)
+	pss.NewContent("aaaaaa")
+	if pss.String() != "aaaaa" {
+		t.Fatalf("Content is not \"aaaaa\" but %s", pss.String())
+	}
+	pss.NewContent("bbb")
+	if string(pss.Raw()) != "bbbaa" {
+		t.Fatalf("Content is not \"bbbaa\" but %s", string(pss.Raw()))
+	}
+}
