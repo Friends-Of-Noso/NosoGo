@@ -1,6 +1,6 @@
 package network
 
-// TODO: Need to involve generics here...
+// TODO: Need to involve generics here if it makes sense...
 
 type NetMessage struct {
 	rawMessage string
