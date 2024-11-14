@@ -52,7 +52,7 @@ func init() {
 }
 
 func runNode(cmd *cobra.Command, args []string) {
-	/*log.Debug("serve called")
+	/*log.Debug("node called")
 	if fs.FileExists(viper.ConfigFileUsed()) {
 		log.Debugf("Stratum Address: '%s'", config.Stratum.Address)
 		log.Debugf("Stratum Port: %d", config.Stratum.Port)

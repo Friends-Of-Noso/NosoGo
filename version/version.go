@@ -6,7 +6,7 @@ var (
 	VersionMajor = 0
 	VersionMinor = 1
 	VersionPatch = 0
-	Version      = "v0.1.0"
+	Version      = "v0.0.1"
 	Name         = "NosoGo"
 	// GitCommit is set with --ldflags "-X main.gitCommit=$(git rev-parse HEAD)"
 	GitCommit string
