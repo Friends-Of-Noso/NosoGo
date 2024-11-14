@@ -19,8 +19,8 @@ NOSOGOD_RELEASE64 := nosogod-$(VERSION)-$(GOOS)_amd64
 
 NOSOGO_RELEASE64 := nosogo-$(VERSION)-$(GOOS)_amd64
 
-#all: test target release-all install
-all: target release-all install
+all: test target release-all install
+#all: target release-all install
 
 nosogod:
 	@echo "Building nosogod to bin/nosogod"
@@ -65,12 +65,12 @@ clean:
 target/$(NOSOGOD_BINARY64):
 	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogod/main.go
 
-#test:
-#	@echo "====> Running go test"
-#	@go test -tags "network" $(PACKAGES)
+test:
+	@echo "====> Running go test"
+	@go test ./tests
 
 #benchmark:
-#	@go test -bench $(PACKAGES)
+#	@go test -bench ./tests
 
 #functional-tests:
 #	@go test -timeout=5m -tags="functional" ./test

@@ -1,11 +1,13 @@
-package utils
+package tests
 
 import (
 	"testing"
+
+	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 func TestNewPascalShortStringEmpty(t *testing.T) {
-	nps := NewPascalShortString("", 10)
+	nps := utils.NewPascalShortString("", 10)
 	if nps.String() != "" {
 		t.Fatalf("Content is not an empty string but is %s", nps.String())
 	}
@@ -18,7 +20,7 @@ func TestNewPascalShortStringEmpty(t *testing.T) {
 }
 
 func TestNewPascalShortString(t *testing.T) {
-	nps := NewPascalShortString("Hello World!", 15)
+	nps := utils.NewPascalShortString("Hello World!", 15)
 	if nps.String() != "Hello World!" {
 		t.Fatalf("Content is not \"Hello World!\" but is %s", nps.String())
 	}
@@ -32,7 +34,7 @@ func TestNewPascalShortString(t *testing.T) {
 
 // TODO: Add test for new content
 func TestPascalShortStringNewContent(t *testing.T) {
-	pss := NewPascalShortString("abc", 5)
+	pss := utils.NewPascalShortString("abc", 5)
 	pss.NewContent("aaaaaa")
 	if pss.String() != "aaaaa" {
 		t.Fatalf("Content is not \"aaaaa\" but %s", pss.String())
