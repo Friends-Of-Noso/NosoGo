@@ -7,6 +7,7 @@ import (
 	toml "github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
@@ -70,4 +71,11 @@ func runInit(cmd *cobra.Command, args []string) {
 	log.Infof("Created config file at '%s'", config.GetConfigFile())
 
 	// Create LevelDB stuff
+	db, err := leveldb.OpenFile(config.GetDatabaseFolder(), nil)
+	if err != nil {
+		log.Fatalf("Error creating database: %v", err)
+	}
+	defer db.Close()
+
+	log.Infof("Created database at '%s'", config.GetDatabaseFolder())
 }

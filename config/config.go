@@ -71,7 +71,7 @@ func (c *Config) GetLogFile() string {
 	}
 }
 
-func (c *Config) GetDatabasePath() string {
+func (c *Config) GetDatabaseFolder() string {
 	if c.ConfigDir != "" && c.DatabasePath != "" {
 		return path.Join(c.ConfigDir, c.DatabasePath)
 	} else {

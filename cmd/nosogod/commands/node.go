@@ -1,11 +1,24 @@
 package commands
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
-	//"github.com/Friends-Of-Noso/NosoGo/network"
-	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
+	"github.com/Friends-Of-Noso/NosoGo/node"
+	"github.com/Friends-Of-Noso/NosoGo/utils"
+)
+
+const (
+	cNodeAddressFlag = "stratum-address"
+	cNodePortFlag    = "stratum-port"
 )
 
 // nodeCmd represents the node command
@@ -27,25 +40,13 @@ func init() {
 	// and all subcommands, e.g.:
 	// nodeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	/*nodeCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
+	nodeCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
 
-	nodeCmd.Flags().String(cAPIAddressFlag, config.API.Address, "API address")
-	viper.BindPFlag("api.address", nodeCmd.Flags().Lookup(cAPIAddressFlag))
+	nodeCmd.Flags().String(cNodeAddressFlag, config.Node.Address, "Node address")
+	viper.BindPFlag("stratum.address", nodeCmd.Flags().Lookup(cNodeAddressFlag))
 
-	nodeCmd.Flags().Int(cAPIPortFlag, config.API.Port, "API port")
-	viper.BindPFlag("api.port", nodeCmd.Flags().Lookup(cAPIPortFlag))
-
-	nodeCmd.Flags().String(cAPIAccessTokenFlag, config.API.AccessToken, "API access token")
-	viper.BindPFlag("api.access_token", nodeCmd.Flags().Lookup(cAPIAccessTokenFlag))
-
-	nodeCmd.Flags().String(cStratumAddressFlag, config.Stratum.Address, "Stratum address")
-	viper.BindPFlag("stratum.address", nodeCmd.Flags().Lookup(cStratumAddressFlag))
-
-	nodeCmd.Flags().Int(cStratumPortFlag, config.Stratum.Port, "Stratum port")
-	viper.BindPFlag("stratum.port", nodeCmd.Flags().Lookup(cStratumPortFlag))
-
-	nodeCmd.Flags().Int(cStratumMaxConnectionsFlag, config.Stratum.MaxConnections, "Stratum Max Connections")
-	viper.BindPFlag("stratum.max_connections", nodeCmd.Flags().Lookup(cStratumMaxConnectionsFlag))*/
+	nodeCmd.Flags().Int(cNodePortFlag, config.Node.Port, "Node port")
+	viper.BindPFlag("stratum.port", nodeCmd.Flags().Lookup(cNodePortFlag))
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
@@ -54,49 +55,66 @@ func init() {
 
 func runNode(cmd *cobra.Command, args []string) {
 	log.Debug("node called")
-	/*if fs.FileExists(viper.ConfigFileUsed()) {
-		log.Debugf("Stratum Address: '%s'", config.Stratum.Address)
-		log.Debugf("Stratum Port: %d", config.Stratum.Port)
-		log.Debugf("Stratum Max Connections: %d", config.Stratum.MaxConnections)
-		log.Debugf("Stratum Difficulty: %d", config.Stratum.Difficulty)
-		log.Debugf("API Address: '%s'", config.API.Address)
-		log.Debugf("API Port: %d", config.API.Port)
-		log.Debugf("API Access Token: '%s'", config.API.AccessToken)
+	if utils.FileExists(viper.ConfigFileUsed()) {
+		log.Debugf("Node Address: '%s'", config.Node.Address)
+		log.Debugf("Node Port: %d", config.Node.Port)
 
-		// TODO: Make sure we have sane values for address and port
+		// Create a cancellable context.
+		ctx, cancel := context.WithCancel(context.Background())
 
-		var waitGroup sync.WaitGroup
+		// Create a channel to receive OS signals.
+		sigChan := make(chan os.Signal, 1)
 
-		// Stratum Server
-		ctx := context.Background()
-		server := server.NewServer(
-			ctx, config.Stratum.Address,
-			config.Stratum.Port,
-			config.Stratum.MaxConnections,
-			config.Stratum.Difficulty,
-			config.API.Address,
-			config.API.Port,
-			config.API.AccessToken)
+		// Notify on all relevant Windows and Unix signals.
+		signal.Notify(sigChan,
+			// Windows signals
+			os.Interrupt,    // Ctrl+C
+			syscall.SIGTERM, // Termination signal
+			syscall.SIGABRT, // Abort signal (Windows and Unix)
 
-		// Start Polling the node's API
-		waitGroup.Add(1)
-		go func() {
-			defer waitGroup.Done()
-			server.PollNode()
-		}()
+			// Unix/Linux signals
+			syscall.SIGHUP,  // Hangup detected (terminal or process dies)
+			syscall.SIGQUIT, // Quit from keyboard (Ctrl+\ on Unix)
+			syscall.SIGINT,  // Interrupt from keyboard (Ctrl+C on Unix)
+			// syscall.SIGTSTP, // Stop typed at terminal (Ctrl+Z on Unix)
+			// syscall.SIGUSR1, // User-defined signal 1
+			// syscall.SIGUSR2, // User-defined signal 2
+		)
 
-		// Start the server
-		waitGroup.Add(1)
-		go func() {
-			defer waitGroup.Done()
-			if err := server.ListenAndServe(); err != nil {
-				log.Fatalf("Error on ListenAndServe: %s", err)
-			}
-		}()
+		var wg sync.WaitGroup
 
-		// Wait for all servers to exit
-		waitGroup.Wait()
+		node, err := node.NewNode(
+			ctx,
+			cancel,
+			&wg,
+			config.Node.Address,
+			config.Node.Port,
+			config.DatabasePath,
+		)
+		if err != nil {
+			log.Fatalf("Error creating node: %v", err)
+		}
+
+		wg.Add(1)
+		go node.Start()
+		// Block here until we receive a termination signal
+		sig := <-sigChan
+		// Print a new line after the "^C" or "^\"
+		if sig == syscall.SIGINT || sig == syscall.SIGQUIT {
+			fmt.Println()
+		}
+		log.Infof("Received signal '%s'", sig)
+
+		// Pool server shutdown cancels the context to signal goroutines to stop
+		log.Debug("Shutting down the node...")
+		node.Shutdown()
+
+		// Wait for all goroutines to finish
+		log.Info("Waiting for threads to finish...")
+		wg.Wait()
+		log.Info("Threads done. Exiting.")
+
 	} else {
 		log.Fatalf("Cannot find config file '%s', please run the 'init' command first", viper.ConfigFileUsed())
-	}*/
+	}
 }
