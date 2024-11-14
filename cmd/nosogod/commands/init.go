@@ -1,11 +1,15 @@
 package commands
 
 import (
+	"os"
+
+	ms "github.com/mitchellh/mapstructure"
+	toml "github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
-	//ms "github.com/mitchellh/mapstructure"
-	//toml "github.com/pelletier/go-toml/v2"
-	//log "github.com/Friends-Of-Noso/NosoGo/logger"
-	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
+	"github.com/spf13/viper"
+
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 // initCmd represents the init command
@@ -31,8 +35,8 @@ func init() {
 }
 
 func runInit(cmd *cobra.Command, args []string) {
-	/*log.Debug("init called")
-	if fs.FileExists(config.GetConfigFile()) {
+	log.Debug("init called")
+	if utils.FileExists(config.GetConfigFile()) {
 		log.Fatalf("Config already exists: %s", config.GetConfigFile())
 		os.Exit(1)
 	}
@@ -41,7 +45,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	config.ConfigDir = config.GetConfigFolder()
 
 	// Logs Folder
-	fs.EnsureDir(config.GetLogsFolder(), 0755)
+	utils.EnsureDir(config.GetLogsFolder(), 0755)
 	if logLevel != "" {
 		log.SetFileAndLevel(config.GetLogFile(), logLevel)
 	} else {
@@ -53,7 +57,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	viper.SetConfigType("toml")
 	viper.SetConfigFile(config.GetConfigFile())
 	if err := viper.SafeWriteConfig(); err != nil {
-		log.Fatalf("Error saving config file: %s", err)
+		log.Fatalf("Error saving config file: '%s'", err)
 	}
 
 	// Write to Config File
@@ -61,9 +65,9 @@ func runInit(cmd *cobra.Command, args []string) {
 	ms.Decode(config, &outMap)
 	b, err := toml.Marshal(outMap)
 	cobra.CheckErr(err)
-	fs.MustWriteFile(viper.ConfigFileUsed(), b, 0644)
+	utils.MustWriteFile(viper.ConfigFileUsed(), b, 0644)
 
-	log.Infof("Created config file at %s", config.GetLogFile())*/
+	log.Infof("Created config file at '%s'", config.GetConfigFile())
 
 	// Create LevelDB stuff
 }

@@ -2,7 +2,8 @@ package commands
 
 import (
 	"github.com/spf13/cobra"
-	//log "github.com/Friends-Of-Noso/NosoGo/logger"
+
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	//"github.com/Friends-Of-Noso/NosoGo/network"
 	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
 )
@@ -52,8 +53,8 @@ func init() {
 }
 
 func runNode(cmd *cobra.Command, args []string) {
-	/*log.Debug("node called")
-	if fs.FileExists(viper.ConfigFileUsed()) {
+	log.Debug("node called")
+	/*if fs.FileExists(viper.ConfigFileUsed()) {
 		log.Debugf("Stratum Address: '%s'", config.Stratum.Address)
 		log.Debugf("Stratum Port: %d", config.Stratum.Port)
 		log.Debugf("Stratum Max Connections: %d", config.Stratum.MaxConnections)

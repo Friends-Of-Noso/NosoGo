@@ -7,9 +7,9 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	//cfg "github.com/Friends-Of-Noso/NosoGo/config"
-	//log "github.com/Friends-Of-Noso/NosoGo/logger"
-	//fs "github.com/Friends-Of-Noso/NosoGo/utils"
+	cfg "github.com/Friends-Of-Noso/NosoGo/config"
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	"github.com/Friends-Of-Noso/NosoGo/utils"
 	ver "github.com/Friends-Of-Noso/NosoGo/version"
 )
 
@@ -18,8 +18,8 @@ const (
 )
 
 var (
-	//config   = cfg.DefaultConfig()
-	//cfgFile  string
+	config   = cfg.DefaultConfig()
+	cfgFile  string
 	logLevel string
 )
 
@@ -60,12 +60,12 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	/*if cfgFile != "" {
+	if cfgFile != "" {
 		// Use config file from the flag.
 		viper.SetConfigType("toml")
 		viper.SetConfigFile(cfgFile)
 	} else {
-		// Search config in home directory with name ".stratumd" (without extension).
+		// Search config in home directory with name ".nosogod" (without extension).
 		viper.AddConfigPath(config.GetConfigFolder())
 		viper.SetConfigType("toml")
 		viper.SetConfigFile(config.GetConfigFile())
@@ -73,7 +73,7 @@ func initConfig() {
 
 	viper.AutomaticEnv() // read in environment variables that match
 
-	if fs.FileExists(viper.ConfigFileUsed()) {
+	if utils.FileExists(viper.ConfigFileUsed()) {
 		// Logger
 		if logLevel != "" {
 			log.SetFileAndLevel(config.GetLogFile(), logLevel)
@@ -92,5 +92,5 @@ func initConfig() {
 		}
 	} else {
 		log.SetFileAndLevel("", "info")
-	}*/
+	}
 }
