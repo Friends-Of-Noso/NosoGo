@@ -13,6 +13,7 @@ const (
 	cLogsFolderName   = "logs"
 	cLogLevel         = "info"
 	cLogFileName      = "nosogod.log"
+	cDatabasePath     = "data"
 	cNodeAddress      = "0.0.0.0"
 	cNodePort         = 45050
 )
@@ -27,15 +28,13 @@ func homeFolder() string {
 type Config struct {
 	// Top level options use an anonymous struct
 	BaseConfig `mapstructure:",squash"`
-	Database   *DatabaseConfig `mapstructure:"database"`
-	Node       *NodeConfig     `mapstructure:"node"`
+	Node       *NodeConfig `mapstructure:"node"`
 }
 
 // DefaultConfig Default configurable parameters.
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: DefaultBaseConfig(),
-		Database:   DefaultDatabaseConfig(),
 		Node:       DefaultStratumServerConfig(),
 	}
 }
@@ -72,6 +71,14 @@ func (c *Config) GetLogFile() string {
 	}
 }
 
+func (c *Config) GetDatabasePath() string {
+	if c.ConfigDir != "" && c.DatabasePath != "" {
+		return path.Join(c.ConfigDir, c.DatabasePath)
+	} else {
+		return path.Join(homeFolder(), cConfigFolderName, cDatabasePath)
+	}
+}
+
 type BaseConfig struct {
 	// The root directory for all data.
 	// This should be set in viper so it can unmarshal into this struct
@@ -82,32 +89,17 @@ type BaseConfig struct {
 	LogFolder string `mapstructure:"log_folder"`
 	// log file name
 	LogFile string `mapstructure:"log_file"`
+	// LevelDB path
+	DatabasePath string `mapstructure:"database_path"`
 }
 
 // DefaultBaseConfig Default configurable base parameters.
 func DefaultBaseConfig() BaseConfig {
 	return BaseConfig{
-		LogLevel:  cLogLevel,
-		LogFolder: cLogsFolderName,
-		LogFile:   cLogFileName,
-	}
-}
-
-type DatabaseConfig struct {
-	Host     string `mapstructure:"host"`
-	Port     int    `mapstructure:"port"`
-	Database string `mapstructure:"name"`
-	User     string `mapstructure:"user"`
-	Password string `mapstructure:"password"`
-}
-
-func DefaultDatabaseConfig() *DatabaseConfig {
-	return &DatabaseConfig{
-		"localhost",
-		0,
-		"nosogod",
-		"nosogod-user",
-		"Secret",
+		LogLevel:     cLogLevel,
+		LogFolder:    cLogsFolderName,
+		LogFile:      cLogFileName,
+		DatabasePath: cDatabasePath,
 	}
 }
 
