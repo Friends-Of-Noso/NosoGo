@@ -89,7 +89,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			&wg,
 			config.Node.Address,
 			config.Node.Port,
-			config.DatabasePath,
+			config.GetDatabaseFolder(),
 		)
 		if err != nil {
 			log.Fatalf("Error creating node: %v", err)
@@ -105,7 +105,7 @@ func runNode(cmd *cobra.Command, args []string) {
 		}
 		log.Infof("Received signal '%s'", sig)
 
-		// Pool server shutdown cancels the context to signal goroutines to stop
+		// Node shutdown cancels the context to signal goroutines to stop
 		log.Debug("Shutting down the node...")
 		node.Shutdown()
 

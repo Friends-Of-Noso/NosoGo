@@ -25,6 +25,7 @@ all: test target release-all install
 nosogod:
 	@echo "Building nosogod to bin/nosogod"
 	@mkdir -p bin
+	@protoc --go_out=. protobuf/messages.proto
 	@go build $(BUILD_FLAGS) -o bin/nosogod cmd/nosogod/main.go
 
 install:
@@ -63,6 +64,7 @@ clean:
 	@echo "Done."
 
 target/$(NOSOGOD_BINARY64):
+	protoc --go_out=. protobuf/messages.proto
 	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogod/main.go
 
 test:
