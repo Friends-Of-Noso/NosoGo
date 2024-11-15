@@ -182,7 +182,11 @@ func (n *Node) Start() {
 	log.Debug("Node.Start() called")
 	defer n.wg.Done()
 
-	log.Infof("Listening on /ip4/%s/tcp/%d/p2p/%s", n.address, n.port, n.host.ID())
+	log.Infof("Listening on %s/p2p/%s", n.host.Addrs()[0], n.host.ID())
+	log.Debugf("Node ID: %s", n.host.ID())
+	for key, value := range n.host.Addrs() {
+		log.Debugf("Address: %d, %s", key, value)
+	}
 
 	if n.seed != "" {
 		// connect to seed
