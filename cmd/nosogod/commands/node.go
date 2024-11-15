@@ -17,8 +17,11 @@ import (
 )
 
 const (
-	cNodeAddressFlag = "stratum-address"
-	cNodePortFlag    = "stratum-port"
+	cNodeAddressFlag = "node-address"
+	cNodeAddress     = "node.address"
+	cNodePortFlag    = "node-port"
+	cNodePort        = "node.port"
+	cSeedFlag        = "seed"
 )
 
 // nodeCmd represents the node command
@@ -29,6 +32,7 @@ var (
 		//Long:  `Starts the web server.`,
 		Run: runNode,
 	}
+	seed string
 )
 
 func init() {
@@ -43,10 +47,12 @@ func init() {
 	nodeCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
 
 	nodeCmd.Flags().String(cNodeAddressFlag, config.Node.Address, "Node address")
-	viper.BindPFlag("stratum.address", nodeCmd.Flags().Lookup(cNodeAddressFlag))
+	viper.BindPFlag(cNodeAddress, nodeCmd.Flags().Lookup(cNodeAddressFlag))
 
 	nodeCmd.Flags().Int(cNodePortFlag, config.Node.Port, "Node port")
-	viper.BindPFlag("stratum.port", nodeCmd.Flags().Lookup(cNodePortFlag))
+	viper.BindPFlag(cNodePort, nodeCmd.Flags().Lookup(cNodePortFlag))
+
+	nodeCmd.Flags().StringVarP(&seed, "seed", "s", "", "seed to connect")
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
@@ -83,13 +89,26 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		var wg sync.WaitGroup
 
+		// if seed != "" {
+		// 	log.Debugf("Got seed: %s", seed)
+		// 	if strings.Contains(seed, ":") {
+		// 		bits := strings.Split(seed, ":")
+		// 		seed = fmt.Sprintf("/ip4/%s/tcp/%s", bits[0], bits[1])
+		// 	} else {
+		// 		seed = fmt.Sprintf("/ip4/%s/tcp/%d", seed, cfg.DefaultNodePort)
+		// 	}
+		// 	log.Debugf("Seed multiaddr: %s", seed)
+		// }
+
 		node, err := node.NewNode(
 			ctx,
 			cancel,
 			&wg,
 			config.Node.Address,
 			config.Node.Port,
+			config.GetConfigFolder(),
 			config.GetDatabaseFolder(),
+			seed,
 		)
 		if err != nil {
 			log.Fatalf("Error creating node: %v", err)

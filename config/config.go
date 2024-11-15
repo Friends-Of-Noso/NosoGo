@@ -8,14 +8,14 @@ import (
 )
 
 const (
-	cConfigFolderName = ".nosogod"
-	cConfigFileName   = "config.toml"
-	cLogsFolderName   = "logs"
-	cLogLevel         = "info"
-	cLogFileName      = "nosogod.log"
-	cDatabasePath     = "data"
-	cNodeAddress      = "0.0.0.0"
-	cNodePort         = 45050
+	cConfigFolderName  = ".nosogod"
+	cConfigFileName    = "config.toml"
+	cLogsFolderName    = "logs"
+	cLogLevel          = "info"
+	cLogFileName       = "nosogod.log"
+	cDatabasePath      = "data"
+	DefaultNodeAddress = "0.0.0.0"
+	DefaultNodePort    = 45050
 )
 
 func homeFolder() string {
@@ -110,7 +110,7 @@ type NodeConfig struct {
 
 func DefaultStratumServerConfig() *NodeConfig {
 	return &NodeConfig{
-		cNodeAddress,
-		cNodePort,
+		DefaultNodeAddress,
+		DefaultNodePort,
 	}
 }
