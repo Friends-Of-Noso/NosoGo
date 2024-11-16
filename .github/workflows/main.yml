@@ -40,9 +40,6 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
-#      - name: Get Protobuf Compiler with Go support
-#        run: sudo apt install -y protoc-gen-go
-
       - name: Go Mod Tidy
         run: go mod tidy
 

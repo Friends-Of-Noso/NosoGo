@@ -2,8 +2,11 @@ package commands
 
 import (
 	"fmt"
+	"path"
 
 	"github.com/spf13/cobra"
+
+	"github.com/Friends-Of-Noso/NosoGo/api"
 )
 
 var networkStatusCmd = &cobra.Command{
@@ -38,5 +41,7 @@ func runNetworkStatus(cmd *cobra.Command, args []string) {
 		fmt.Println("Output in 'JSON' format")
 	}
 
-	fmt.Printf("API: %s:%d\n", config.API.Address, config.API.Port)
+	path := path.Join(api.APIBasePath, api.APINetworkStatus)
+	url := fmt.Sprintf("http://%s:%d/%s", config.API.Address, config.API.Port, path)
+	fmt.Printf("Endpoint: '%s'\n", url)
 }
