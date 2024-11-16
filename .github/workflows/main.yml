@@ -34,6 +34,9 @@ jobs:
         with:
           go-version: '1.22'
 
+      - name: Get Protobuf Compiler with Go support
+        run: sudo apt install -y protoc-gen-go
+
       - name: Run tests
         run: make test
 
