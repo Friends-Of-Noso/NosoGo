@@ -40,8 +40,8 @@ jobs:
       - name: Build Node
         run: make nosogod
 
-#      - name: Build Client
-#        run: make nosogocli
+      - name: Build Client
+        run: make nosogocli
 
   release:
     if: contains(github.ref_type, 'tag')
