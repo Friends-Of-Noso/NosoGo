@@ -15,7 +15,7 @@ BUILD_FLAGS := -ldflags "-X nosogod/version.GitCommit=`git rev-parse HEAD`"
 NOSOGOD_BINARY64 := nosogod-$(GOOS)_amd64
 NOSOGOCLI_BINARY64 := nosogocli-$(GOOS)_amd64
 
-VERSION := $(shell awk -F= '/Version =/ {print $$2}' version/version.go | tr -d "\" ")
+VERSION := $(shell grep -E "Version[ ]*=" version/version.go | tr -d "\" " | cut -d "=" -f 2)
 
 NOSOGOD_RELEASE64 := nosogod-$(VERSION)-$(GOOS)_amd64
 NOSOGOCLI_RELEASE64 := nosogocli-$(VERSION)-$(GOOS)_amd64
