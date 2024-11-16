@@ -268,8 +268,14 @@ func (n *Node) Start() {
 
 func (n *Node) Shutdown() {
 	log.Debug("Node.Shutdown() called")
-	n.db.Close()
 	n.cancel()
+	// Wait for all goroutines to finish
+	log.Info("Waiting for threads to finish...")
+	n.wg.Wait()
+	// Close the database
+	log.Info("Closing database...")
+	n.db.Close()
+	log.Info("Exiting.")
 }
 
 func (n *Node) handleBlockSubscription(sub *pubsub.Subscription) {

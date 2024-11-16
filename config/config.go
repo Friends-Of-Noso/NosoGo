@@ -16,6 +16,8 @@ const (
 	cDatabasePath      = "data"
 	DefaultNodeAddress = "0.0.0.0"
 	DefaultNodePort    = 45050
+	DefaultAPIAddress  = "127.0.0.1"
+	DefaultAPIPort     = 45505
 )
 
 func homeFolder() string {
@@ -29,13 +31,15 @@ type Config struct {
 	// Top level options use an anonymous struct
 	BaseConfig `mapstructure:",squash"`
 	Node       *NodeConfig `mapstructure:"node"`
+	API        *APIConfig  `mapstructure:"api"`
 }
 
 // DefaultConfig Default configurable parameters.
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: DefaultBaseConfig(),
-		Node:       DefaultStratumServerConfig(),
+		Node:       DefaultNodeConfig(),
+		API:        DefaultAPIConfig(),
 	}
 }
 
@@ -108,9 +112,21 @@ type NodeConfig struct {
 	Port    int    `mapstructure:"port"`
 }
 
-func DefaultStratumServerConfig() *NodeConfig {
+func DefaultNodeConfig() *NodeConfig {
 	return &NodeConfig{
 		DefaultNodeAddress,
 		DefaultNodePort,
+	}
+}
+
+type APIConfig struct {
+	Address string `mapstructure:"address"`
+	Port    int    `mapstructure:"port"`
+}
+
+func DefaultAPIConfig() *APIConfig {
+	return &APIConfig{
+		DefaultAPIAddress,
+		DefaultAPIPort,
 	}
 }

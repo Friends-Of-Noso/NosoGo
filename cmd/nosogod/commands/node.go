@@ -128,11 +128,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		log.Debug("Shutting down the node...")
 		node.Shutdown()
 
-		// Wait for all goroutines to finish
-		log.Info("Waiting for threads to finish...")
-		wg.Wait()
-		log.Info("Threads done. Exiting.")
-
 	} else {
 		log.Fatalf("Cannot find config file '%s', please run the 'init' command first", viper.ConfigFileUsed())
 	}
