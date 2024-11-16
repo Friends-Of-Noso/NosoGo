@@ -8,7 +8,7 @@
 [![Downloads](https://img.shields.io/github/downloads/Friends-Of-Noso/NosoGo/total)](https://github.com/Friends-Of-Noso/NosoGo/releases)
 
 > [!IMPORTANT]
-> This is still very much a **work in progress**
+> This is still very much a **work in progress**.\
 > None of the releases are of any use, they are only tests to the `CI`/`CD` workflow.
 
 A node implementation in Go for the Noso cryptocoin.
