@@ -21,7 +21,13 @@ jobs:
 
   build:
     name: Test and Build Applications
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+          os: [ ubuntu-latest, windows-latest, macos-latest]
+          go: [ "1.22", "1.23" ]
 
     steps:
       - name: Checkout
@@ -32,10 +38,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: ${{ matrix.go }}
 
-      - name: Get Protobuf Compiler with Go support
-        run: sudo apt install -y protoc-gen-go
+#      - name: Get Protobuf Compiler with Go support
+#        run: sudo apt install -y protoc-gen-go
 
       - name: Go Mod Tidy
         run: go mod tidy
@@ -48,6 +54,12 @@ jobs:
 
       - name: Build Client
         run: make nosogocli
+
+      - name: Upload Binaries
+        uses: actions/upload-artifact@v4
+        with:
+          name: nosogo-${{ matrix.os }}-go_${{ matrix.go }}
+          path: bin/nosogo*
 
   release:
     if: contains(github.ref_type, 'tag')

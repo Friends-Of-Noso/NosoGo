@@ -27,7 +27,6 @@ all: test target release-all install
 nosogod:
 	@echo "Building nosogod to bin/nosogod"
 	@mkdir -p bin
-	@protoc --go_out=. protobuf/messages.proto
 	@go build $(BUILD_FLAGS) -o bin/nosogod cmd/nosogod/main.go
 
 nosogocli:
@@ -60,7 +59,7 @@ release: binary
 endif
 
 release-all: clean
-#	GOOS=darwin  make release
+	GOOS=darwin  make release
 	GOOS=linux   make release
 	GOOS=windows make release
 
@@ -70,11 +69,9 @@ clean:
 	@rm -rf target
 	@rm -f $(GOPATH)/bin/nosogod
 	@rm -f $(GOPATH)/bin/nosogocli
-#	@echo "Cleaning temp test data..."
 	@echo "Done."
 
 target/$(NOSOGOD_BINARY64):
-	protoc --go_out=. protobuf/messages.proto
 	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogod/main.go
 
 target/$(NOSOGOCLI_BINARY64):
@@ -83,13 +80,5 @@ target/$(NOSOGOCLI_BINARY64):
 test:
 	@echo "====> Running go test"
 	@go test ./tests
-
-#benchmark:
-#	@go test -bench ./tests
-
-#functional-tests:
-#	@go test -timeout=5m -tags="functional" ./test
-#
-#ci: test functional-tests
 
 .PHONY: all target release-all clean
