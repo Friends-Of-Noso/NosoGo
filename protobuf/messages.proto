@@ -2,34 +2,52 @@ syntax = "proto3";
 package protobuf;
 option go_package = "./protobuf";
 
-message Transaction {
-  string from = 1;
-  string to = 2;
-  uint64 amount = 3;
-}
-
 message Block {
+  uint64 height = 1;
+  string hash = 2;
+  string prev_hash = 3;
+  int64 timestamp = 4;
+  string merkle_root = 5;
+  repeated Transaction transactions = 6;
+}
+
+message Transaction {
   string hash = 1;
-  string prev_hash = 2;
+  string type = 2;
   int64 timestamp = 3;
-  repeated Transaction transactions = 4;
-  uint64 height = 5;
+  string sender = 4;
+  string receiver = 5;
+  uint64 amount = 6;
 }
 
-message GetPeersRequest {}
-
-message PeersResponse {
-  repeated string peers = 1;
+message Handshake {
+  string version = 1;
 }
 
-message NewBlockMessage {
+message HandshakeResponse {
+  string version = 1;
+}
+
+message NewBlock {
   Block block = 1;
+}
+
+message GetBlocks {
+  string from_id = 1;
+  string to_id = 2;
+  int64 height = 3;
+}
+
+message GetBlocksResponse {
+  repeated Block blocks = 1;
 }
 
 message NetworkMessage {
   oneof payload {
-    GetPeersRequest get_peers = 1;
-    PeersResponse peers_response = 2;
-    NewBlockMessage new_block = 3;
+    Handshake handshake = 1;
+    HandshakeResponse handshake_response = 2;
+    NewBlock new_block = 3;
+    GetBlocks get_blocks = 4;
+    GetBlocksResponse get_blocks_response = 5;
   }
 }

@@ -251,11 +251,19 @@ func (n *Node) Start() {
 				hash := md.Sum([]byte("MyBlock" + strconv.Itoa(height)))
 				prevHash := md.Sum([]byte("MyBlock" + strconv.Itoa(height-1)))
 				block := pb.Block{
-					Hash:      hex.EncodeToString(hash),
+					Hash:      "B" + hex.EncodeToString(hash),
 					Height:    uint64(height),
-					PrevHash:  hex.EncodeToString(prevHash),
+					PrevHash:  "B" + hex.EncodeToString(prevHash),
 					Timestamp: time.Now().Unix(),
 				}
+				transaction := pb.Transaction{
+					Hash:     "T" + hex.EncodeToString(hash),
+					Type:     "COINBASE",
+					Sender:   "COINBASE",
+					Receiver: "NBlahBlah",
+					Amount:   1,
+				}
+				block.Transactions = append(block.Transactions, &transaction)
 				height++
 				log.Debugf("Propagating a block %d, %s, %s", block.Height, block.Hash, block.PrevHash)
 				n.propagateBlock(&block)
@@ -313,6 +321,18 @@ func (n *Node) handleBlockSubscription(sub *pubsub.Subscription) {
 
 func (n *Node) handleNewBlock(block *pb.Block) {
 	log.Infof("Got block(%d): %s, %s", block.Height, block.Hash, block.PrevHash)
+	if len(block.Transactions) > 0 {
+		for index, transaction := range block.Transactions {
+			log.Infof(
+				"Transaction %d, %s, %s, %s, %d",
+				index,
+				transaction.Hash,
+				transaction.Sender,
+				transaction.Receiver,
+				transaction.Amount,
+			)
+		}
+	}
 }
 
 func (n *Node) propagateBlock(block *pb.Block) error {
@@ -327,7 +347,7 @@ func (n *Node) propagateBlock(block *pb.Block) error {
 	// Create network message
 	msg := &pb.NetworkMessage{
 		Payload: &pb.NetworkMessage_NewBlock{
-			NewBlock: &pb.NewBlockMessage{
+			NewBlock: &pb.NewBlock{
 				Block: block,
 			},
 		},

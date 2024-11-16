@@ -20,85 +20,23 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type Transaction struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	From   string `protobuf:"bytes,1,opt,name=from,proto3" json:"from,omitempty"`
-	To     string `protobuf:"bytes,2,opt,name=to,proto3" json:"to,omitempty"`
-	Amount uint64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
-}
-
-func (x *Transaction) Reset() {
-	*x = Transaction{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_protobuf_messages_proto_msgTypes[0]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *Transaction) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*Transaction) ProtoMessage() {}
-
-func (x *Transaction) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[0]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
-func (*Transaction) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{0}
-}
-
-func (x *Transaction) GetFrom() string {
-	if x != nil {
-		return x.From
-	}
-	return ""
-}
-
-func (x *Transaction) GetTo() string {
-	if x != nil {
-		return x.To
-	}
-	return ""
-}
-
-func (x *Transaction) GetAmount() uint64 {
-	if x != nil {
-		return x.Amount
-	}
-	return 0
-}
-
 type Block struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Hash         string         `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
-	PrevHash     string         `protobuf:"bytes,2,opt,name=prev_hash,json=prevHash,proto3" json:"prev_hash,omitempty"`
-	Timestamp    int64          `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
-	Transactions []*Transaction `protobuf:"bytes,4,rep,name=transactions,proto3" json:"transactions,omitempty"`
-	Height       uint64         `protobuf:"varint,5,opt,name=height,proto3" json:"height,omitempty"`
+	Height       uint64         `protobuf:"varint,1,opt,name=height,proto3" json:"height,omitempty"`
+	Hash         string         `protobuf:"bytes,2,opt,name=hash,proto3" json:"hash,omitempty"`
+	PrevHash     string         `protobuf:"bytes,3,opt,name=prev_hash,json=prevHash,proto3" json:"prev_hash,omitempty"`
+	Timestamp    int64          `protobuf:"varint,4,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	MerkleRoot   string         `protobuf:"bytes,5,opt,name=merkle_root,json=merkleRoot,proto3" json:"merkle_root,omitempty"`
+	Transactions []*Transaction `protobuf:"bytes,6,rep,name=transactions,proto3" json:"transactions,omitempty"`
 }
 
 func (x *Block) Reset() {
 	*x = Block{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protobuf_messages_proto_msgTypes[1]
+		mi := &file_protobuf_messages_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -111,7 +49,7 @@ func (x *Block) String() string {
 func (*Block) ProtoMessage() {}
 
 func (x *Block) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[1]
+	mi := &file_protobuf_messages_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,7 +62,14 @@ func (x *Block) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Block.ProtoReflect.Descriptor instead.
 func (*Block) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{1}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *Block) GetHeight() uint64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
 }
 
 func (x *Block) GetHash() string {
@@ -148,6 +93,13 @@ func (x *Block) GetTimestamp() int64 {
 	return 0
 }
 
+func (x *Block) GetMerkleRoot() string {
+	if x != nil {
+		return x.MerkleRoot
+	}
+	return ""
+}
+
 func (x *Block) GetTransactions() []*Transaction {
 	if x != nil {
 		return x.Transactions
@@ -155,21 +107,103 @@ func (x *Block) GetTransactions() []*Transaction {
 	return nil
 }
 
-func (x *Block) GetHeight() uint64 {
+type Transaction struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Hash      string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	Type      string `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Timestamp int64  `protobuf:"varint,3,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	Sender    string `protobuf:"bytes,4,opt,name=sender,proto3" json:"sender,omitempty"`
+	Receiver  string `protobuf:"bytes,5,opt,name=receiver,proto3" json:"receiver,omitempty"`
+	Amount    uint64 `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
+}
+
+func (x *Transaction) Reset() {
+	*x = Transaction{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protobuf_messages_proto_msgTypes[1]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *Transaction) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Transaction) ProtoMessage() {}
+
+func (x *Transaction) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[1]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Transaction.ProtoReflect.Descriptor instead.
+func (*Transaction) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *Transaction) GetHash() string {
 	if x != nil {
-		return x.Height
+		return x.Hash
+	}
+	return ""
+}
+
+func (x *Transaction) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
+func (x *Transaction) GetTimestamp() int64 {
+	if x != nil {
+		return x.Timestamp
 	}
 	return 0
 }
 
-type GetPeersRequest struct {
+func (x *Transaction) GetSender() string {
+	if x != nil {
+		return x.Sender
+	}
+	return ""
+}
+
+func (x *Transaction) GetReceiver() string {
+	if x != nil {
+		return x.Receiver
+	}
+	return ""
+}
+
+func (x *Transaction) GetAmount() uint64 {
+	if x != nil {
+		return x.Amount
+	}
+	return 0
+}
+
+type Handshake struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
+
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 }
 
-func (x *GetPeersRequest) Reset() {
-	*x = GetPeersRequest{}
+func (x *Handshake) Reset() {
+	*x = Handshake{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_protobuf_messages_proto_msgTypes[2]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -177,13 +211,13 @@ func (x *GetPeersRequest) Reset() {
 	}
 }
 
-func (x *GetPeersRequest) String() string {
+func (x *Handshake) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetPeersRequest) ProtoMessage() {}
+func (*Handshake) ProtoMessage() {}
 
-func (x *GetPeersRequest) ProtoReflect() protoreflect.Message {
+func (x *Handshake) ProtoReflect() protoreflect.Message {
 	mi := &file_protobuf_messages_proto_msgTypes[2]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -195,21 +229,28 @@ func (x *GetPeersRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetPeersRequest.ProtoReflect.Descriptor instead.
-func (*GetPeersRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use Handshake.ProtoReflect.Descriptor instead.
+func (*Handshake) Descriptor() ([]byte, []int) {
 	return file_protobuf_messages_proto_rawDescGZIP(), []int{2}
 }
 
-type PeersResponse struct {
+func (x *Handshake) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+type HandshakeResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	Peers []string `protobuf:"bytes,1,rep,name=peers,proto3" json:"peers,omitempty"`
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
 }
 
-func (x *PeersResponse) Reset() {
-	*x = PeersResponse{}
+func (x *HandshakeResponse) Reset() {
+	*x = HandshakeResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_protobuf_messages_proto_msgTypes[3]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -217,13 +258,13 @@ func (x *PeersResponse) Reset() {
 	}
 }
 
-func (x *PeersResponse) String() string {
+func (x *HandshakeResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*PeersResponse) ProtoMessage() {}
+func (*HandshakeResponse) ProtoMessage() {}
 
-func (x *PeersResponse) ProtoReflect() protoreflect.Message {
+func (x *HandshakeResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_protobuf_messages_proto_msgTypes[3]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -235,19 +276,19 @@ func (x *PeersResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use PeersResponse.ProtoReflect.Descriptor instead.
-func (*PeersResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use HandshakeResponse.ProtoReflect.Descriptor instead.
+func (*HandshakeResponse) Descriptor() ([]byte, []int) {
 	return file_protobuf_messages_proto_rawDescGZIP(), []int{3}
 }
 
-func (x *PeersResponse) GetPeers() []string {
+func (x *HandshakeResponse) GetVersion() string {
 	if x != nil {
-		return x.Peers
+		return x.Version
 	}
-	return nil
+	return ""
 }
 
-type NewBlockMessage struct {
+type NewBlock struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
@@ -255,8 +296,8 @@ type NewBlockMessage struct {
 	Block *Block `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
 }
 
-func (x *NewBlockMessage) Reset() {
-	*x = NewBlockMessage{}
+func (x *NewBlock) Reset() {
+	*x = NewBlock{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_protobuf_messages_proto_msgTypes[4]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -264,13 +305,13 @@ func (x *NewBlockMessage) Reset() {
 	}
 }
 
-func (x *NewBlockMessage) String() string {
+func (x *NewBlock) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*NewBlockMessage) ProtoMessage() {}
+func (*NewBlock) ProtoMessage() {}
 
-func (x *NewBlockMessage) ProtoReflect() protoreflect.Message {
+func (x *NewBlock) ProtoReflect() protoreflect.Message {
 	mi := &file_protobuf_messages_proto_msgTypes[4]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -282,14 +323,124 @@ func (x *NewBlockMessage) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use NewBlockMessage.ProtoReflect.Descriptor instead.
-func (*NewBlockMessage) Descriptor() ([]byte, []int) {
+// Deprecated: Use NewBlock.ProtoReflect.Descriptor instead.
+func (*NewBlock) Descriptor() ([]byte, []int) {
 	return file_protobuf_messages_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *NewBlockMessage) GetBlock() *Block {
+func (x *NewBlock) GetBlock() *Block {
 	if x != nil {
 		return x.Block
+	}
+	return nil
+}
+
+type GetBlocks struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	FromId string `protobuf:"bytes,1,opt,name=from_id,json=fromId,proto3" json:"from_id,omitempty"`
+	ToId   string `protobuf:"bytes,2,opt,name=to_id,json=toId,proto3" json:"to_id,omitempty"`
+	Height int64  `protobuf:"varint,3,opt,name=height,proto3" json:"height,omitempty"`
+}
+
+func (x *GetBlocks) Reset() {
+	*x = GetBlocks{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protobuf_messages_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetBlocks) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBlocks) ProtoMessage() {}
+
+func (x *GetBlocks) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBlocks.ProtoReflect.Descriptor instead.
+func (*GetBlocks) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetBlocks) GetFromId() string {
+	if x != nil {
+		return x.FromId
+	}
+	return ""
+}
+
+func (x *GetBlocks) GetToId() string {
+	if x != nil {
+		return x.ToId
+	}
+	return ""
+}
+
+func (x *GetBlocks) GetHeight() int64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
+type GetBlocksResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	Blocks []*Block `protobuf:"bytes,1,rep,name=blocks,proto3" json:"blocks,omitempty"`
+}
+
+func (x *GetBlocksResponse) Reset() {
+	*x = GetBlocksResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_protobuf_messages_proto_msgTypes[6]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetBlocksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBlocksResponse) ProtoMessage() {}
+
+func (x *GetBlocksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_protobuf_messages_proto_msgTypes[6]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBlocksResponse.ProtoReflect.Descriptor instead.
+func (*GetBlocksResponse) Descriptor() ([]byte, []int) {
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetBlocksResponse) GetBlocks() []*Block {
+	if x != nil {
+		return x.Blocks
 	}
 	return nil
 }
@@ -301,16 +452,18 @@ type NetworkMessage struct {
 
 	// Types that are assignable to Payload:
 	//
-	//	*NetworkMessage_GetPeers
-	//	*NetworkMessage_PeersResponse
+	//	*NetworkMessage_Handshake
+	//	*NetworkMessage_HandshakeResponse
 	//	*NetworkMessage_NewBlock
+	//	*NetworkMessage_GetBlocks
+	//	*NetworkMessage_GetBlocksResponse
 	Payload isNetworkMessage_Payload `protobuf_oneof:"payload"`
 }
 
 func (x *NetworkMessage) Reset() {
 	*x = NetworkMessage{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_protobuf_messages_proto_msgTypes[5]
+		mi := &file_protobuf_messages_proto_msgTypes[7]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -323,7 +476,7 @@ func (x *NetworkMessage) String() string {
 func (*NetworkMessage) ProtoMessage() {}
 
 func (x *NetworkMessage) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[5]
+	mi := &file_protobuf_messages_proto_msgTypes[7]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -336,7 +489,7 @@ func (x *NetworkMessage) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetworkMessage.ProtoReflect.Descriptor instead.
 func (*NetworkMessage) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{5}
+	return file_protobuf_messages_proto_rawDescGZIP(), []int{7}
 }
 
 func (m *NetworkMessage) GetPayload() isNetworkMessage_Payload {
@@ -346,23 +499,37 @@ func (m *NetworkMessage) GetPayload() isNetworkMessage_Payload {
 	return nil
 }
 
-func (x *NetworkMessage) GetGetPeers() *GetPeersRequest {
-	if x, ok := x.GetPayload().(*NetworkMessage_GetPeers); ok {
-		return x.GetPeers
+func (x *NetworkMessage) GetHandshake() *Handshake {
+	if x, ok := x.GetPayload().(*NetworkMessage_Handshake); ok {
+		return x.Handshake
 	}
 	return nil
 }
 
-func (x *NetworkMessage) GetPeersResponse() *PeersResponse {
-	if x, ok := x.GetPayload().(*NetworkMessage_PeersResponse); ok {
-		return x.PeersResponse
+func (x *NetworkMessage) GetHandshakeResponse() *HandshakeResponse {
+	if x, ok := x.GetPayload().(*NetworkMessage_HandshakeResponse); ok {
+		return x.HandshakeResponse
 	}
 	return nil
 }
 
-func (x *NetworkMessage) GetNewBlock() *NewBlockMessage {
+func (x *NetworkMessage) GetNewBlock() *NewBlock {
 	if x, ok := x.GetPayload().(*NetworkMessage_NewBlock); ok {
 		return x.NewBlock
+	}
+	return nil
+}
+
+func (x *NetworkMessage) GetGetBlocks() *GetBlocks {
+	if x, ok := x.GetPayload().(*NetworkMessage_GetBlocks); ok {
+		return x.GetBlocks
+	}
+	return nil
+}
+
+func (x *NetworkMessage) GetGetBlocksResponse() *GetBlocksResponse {
+	if x, ok := x.GetPayload().(*NetworkMessage_GetBlocksResponse); ok {
+		return x.GetBlocksResponse
 	}
 	return nil
 }
@@ -371,67 +538,105 @@ type isNetworkMessage_Payload interface {
 	isNetworkMessage_Payload()
 }
 
-type NetworkMessage_GetPeers struct {
-	GetPeers *GetPeersRequest `protobuf:"bytes,1,opt,name=get_peers,json=getPeers,proto3,oneof"`
+type NetworkMessage_Handshake struct {
+	Handshake *Handshake `protobuf:"bytes,1,opt,name=handshake,proto3,oneof"`
 }
 
-type NetworkMessage_PeersResponse struct {
-	PeersResponse *PeersResponse `protobuf:"bytes,2,opt,name=peers_response,json=peersResponse,proto3,oneof"`
+type NetworkMessage_HandshakeResponse struct {
+	HandshakeResponse *HandshakeResponse `protobuf:"bytes,2,opt,name=handshake_response,json=handshakeResponse,proto3,oneof"`
 }
 
 type NetworkMessage_NewBlock struct {
-	NewBlock *NewBlockMessage `protobuf:"bytes,3,opt,name=new_block,json=newBlock,proto3,oneof"`
+	NewBlock *NewBlock `protobuf:"bytes,3,opt,name=new_block,json=newBlock,proto3,oneof"`
 }
 
-func (*NetworkMessage_GetPeers) isNetworkMessage_Payload() {}
+type NetworkMessage_GetBlocks struct {
+	GetBlocks *GetBlocks `protobuf:"bytes,4,opt,name=get_blocks,json=getBlocks,proto3,oneof"`
+}
 
-func (*NetworkMessage_PeersResponse) isNetworkMessage_Payload() {}
+type NetworkMessage_GetBlocksResponse struct {
+	GetBlocksResponse *GetBlocksResponse `protobuf:"bytes,5,opt,name=get_blocks_response,json=getBlocksResponse,proto3,oneof"`
+}
+
+func (*NetworkMessage_Handshake) isNetworkMessage_Payload() {}
+
+func (*NetworkMessage_HandshakeResponse) isNetworkMessage_Payload() {}
 
 func (*NetworkMessage_NewBlock) isNetworkMessage_Payload() {}
+
+func (*NetworkMessage_GetBlocks) isNetworkMessage_Payload() {}
+
+func (*NetworkMessage_GetBlocksResponse) isNetworkMessage_Payload() {}
 
 var File_protobuf_messages_proto protoreflect.FileDescriptor
 
 var file_protobuf_messages_proto_rawDesc = []byte{
 	0x0a, 0x17, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2f, 0x6d, 0x65, 0x73, 0x73, 0x61,
 	0x67, 0x65, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x08, 0x70, 0x72, 0x6f, 0x74, 0x6f,
-	0x62, 0x75, 0x66, 0x22, 0x49, 0x0a, 0x0b, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
-	0x6f, 0x6e, 0x12, 0x12, 0x0a, 0x04, 0x66, 0x72, 0x6f, 0x6d, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
-	0x52, 0x04, 0x66, 0x72, 0x6f, 0x6d, 0x12, 0x0e, 0x0a, 0x02, 0x74, 0x6f, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x09, 0x52, 0x02, 0x74, 0x6f, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74,
-	0x18, 0x03, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75, 0x6e, 0x74, 0x22, 0xa9,
-	0x01, 0x0a, 0x05, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x61, 0x73, 0x68, 0x12, 0x1b, 0x0a, 0x09,
-	0x70, 0x72, 0x65, 0x76, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52,
-	0x08, 0x70, 0x72, 0x65, 0x76, 0x48, 0x61, 0x73, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d,
-	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69,
-	0x6d, 0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x39, 0x0a, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73,
-	0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x04, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63,
-	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f,
-	0x6e, 0x73, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x05, 0x20, 0x01,
-	0x28, 0x04, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22, 0x11, 0x0a, 0x0f, 0x47, 0x65,
-	0x74, 0x50, 0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x25, 0x0a,
-	0x0d, 0x50, 0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14,
-	0x0a, 0x05, 0x70, 0x65, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x05, 0x70,
-	0x65, 0x65, 0x72, 0x73, 0x22, 0x38, 0x0a, 0x0f, 0x4e, 0x65, 0x77, 0x42, 0x6c, 0x6f, 0x63, 0x6b,
-	0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12, 0x25, 0x0a, 0x05, 0x62, 0x6c, 0x6f, 0x63, 0x6b,
-	0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75,
-	0x66, 0x2e, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x05, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x22, 0xd1,
-	0x01, 0x0a, 0x0e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67,
-	0x65, 0x12, 0x38, 0x0a, 0x09, 0x67, 0x65, 0x74, 0x5f, 0x70, 0x65, 0x65, 0x72, 0x73, 0x18, 0x01,
-	0x20, 0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
-	0x47, 0x65, 0x74, 0x50, 0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x48,
-	0x00, 0x52, 0x08, 0x67, 0x65, 0x74, 0x50, 0x65, 0x65, 0x72, 0x73, 0x12, 0x40, 0x0a, 0x0e, 0x70,
-	0x65, 0x65, 0x72, 0x73, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x50,
-	0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x48, 0x00, 0x52, 0x0d,
-	0x70, 0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x38, 0x0a,
-	0x09, 0x6e, 0x65, 0x77, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x19, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x4e, 0x65, 0x77, 0x42,
-	0x6c, 0x6f, 0x63, 0x6b, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x48, 0x00, 0x52, 0x08, 0x6e,
-	0x65, 0x77, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61, 0x79, 0x6c, 0x6f,
-	0x61, 0x64, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x62, 0x75, 0x66, 0x22, 0xca, 0x01, 0x0a, 0x05, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x16, 0x0a,
+	0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x68,
+	0x65, 0x69, 0x67, 0x68, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x04, 0x68, 0x61, 0x73, 0x68, 0x12, 0x1b, 0x0a, 0x09, 0x70, 0x72, 0x65,
+	0x76, 0x5f, 0x68, 0x61, 0x73, 0x68, 0x18, 0x03, 0x20, 0x01, 0x28, 0x09, 0x52, 0x08, 0x70, 0x72,
+	0x65, 0x76, 0x48, 0x61, 0x73, 0x68, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73, 0x74,
+	0x61, 0x6d, 0x70, 0x18, 0x04, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69, 0x6d, 0x65, 0x73,
+	0x74, 0x61, 0x6d, 0x70, 0x12, 0x1f, 0x0a, 0x0b, 0x6d, 0x65, 0x72, 0x6b, 0x6c, 0x65, 0x5f, 0x72,
+	0x6f, 0x6f, 0x74, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0a, 0x6d, 0x65, 0x72, 0x6b, 0x6c,
+	0x65, 0x52, 0x6f, 0x6f, 0x74, 0x12, 0x39, 0x0a, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63,
+	0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x06, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x15, 0x2e, 0x70, 0x72,
+	0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69,
+	0x6f, 0x6e, 0x52, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73,
+	0x22, 0x9f, 0x01, 0x0a, 0x0b, 0x54, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e,
+	0x12, 0x12, 0x0a, 0x04, 0x68, 0x61, 0x73, 0x68, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04,
+	0x68, 0x61, 0x73, 0x68, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01,
+	0x28, 0x09, 0x52, 0x04, 0x74, 0x79, 0x70, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x74, 0x69, 0x6d, 0x65,
+	0x73, 0x74, 0x61, 0x6d, 0x70, 0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x09, 0x74, 0x69, 0x6d,
+	0x65, 0x73, 0x74, 0x61, 0x6d, 0x70, 0x12, 0x16, 0x0a, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72,
+	0x18, 0x04, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x73, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x12, 0x1a,
+	0x0a, 0x08, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x08, 0x72, 0x65, 0x63, 0x65, 0x69, 0x76, 0x65, 0x72, 0x12, 0x16, 0x0a, 0x06, 0x61, 0x6d,
+	0x6f, 0x75, 0x6e, 0x74, 0x18, 0x06, 0x20, 0x01, 0x28, 0x04, 0x52, 0x06, 0x61, 0x6d, 0x6f, 0x75,
+	0x6e, 0x74, 0x22, 0x25, 0x0a, 0x09, 0x48, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x12,
+	0x18, 0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x2d, 0x0a, 0x11, 0x48, 0x61, 0x6e,
+	0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18,
+	0x0a, 0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52,
+	0x07, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6f, 0x6e, 0x22, 0x31, 0x0a, 0x08, 0x4e, 0x65, 0x77, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x25, 0x0a, 0x05, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x18, 0x01, 0x20,
+	0x01, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x05, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x22, 0x51, 0x0a, 0x09, 0x47,
+	0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x17, 0x0a, 0x07, 0x66, 0x72, 0x6f, 0x6d,
+	0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x06, 0x66, 0x72, 0x6f, 0x6d, 0x49,
+	0x64, 0x12, 0x13, 0x0a, 0x05, 0x74, 0x6f, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09,
+	0x52, 0x04, 0x74, 0x6f, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x03, 0x52, 0x06, 0x68, 0x65, 0x69, 0x67, 0x68, 0x74, 0x22, 0x3c,
+	0x0a, 0x11, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x12, 0x27, 0x0a, 0x06, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x18, 0x01, 0x20,
+	0x03, 0x28, 0x0b, 0x32, 0x0f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x42,
+	0x6c, 0x6f, 0x63, 0x6b, 0x52, 0x06, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x22, 0xd6, 0x02, 0x0a,
+	0x0e, 0x4e, 0x65, 0x74, 0x77, 0x6f, 0x72, 0x6b, 0x4d, 0x65, 0x73, 0x73, 0x61, 0x67, 0x65, 0x12,
+	0x33, 0x0a, 0x09, 0x68, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x48, 0x61,
+	0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x48, 0x00, 0x52, 0x09, 0x68, 0x61, 0x6e, 0x64, 0x73,
+	0x68, 0x61, 0x6b, 0x65, 0x12, 0x4c, 0x0a, 0x12, 0x68, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b,
+	0x65, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b,
+	0x32, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e, 0x48, 0x61, 0x6e, 0x64,
+	0x73, 0x68, 0x61, 0x6b, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x48, 0x00, 0x52,
+	0x11, 0x68, 0x61, 0x6e, 0x64, 0x73, 0x68, 0x61, 0x6b, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x31, 0x0a, 0x09, 0x6e, 0x65, 0x77, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x18,
+	0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x12, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66,
+	0x2e, 0x4e, 0x65, 0x77, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x48, 0x00, 0x52, 0x08, 0x6e, 0x65, 0x77,
+	0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x12, 0x34, 0x0a, 0x0a, 0x67, 0x65, 0x74, 0x5f, 0x62, 0x6c, 0x6f,
+	0x63, 0x6b, 0x73, 0x18, 0x04, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x13, 0x2e, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x62, 0x75, 0x66, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x48, 0x00,
+	0x52, 0x09, 0x67, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x12, 0x4d, 0x0a, 0x13, 0x67,
+	0x65, 0x74, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1b, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x2e, 0x47, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63, 0x6b, 0x73, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x48, 0x00, 0x52, 0x11, 0x67, 0x65, 0x74, 0x42, 0x6c, 0x6f, 0x63,
+	0x6b, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x09, 0x0a, 0x07, 0x70, 0x61,
+	0x79, 0x6c, 0x6f, 0x61, 0x64, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x62, 0x75, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -446,26 +651,31 @@ func file_protobuf_messages_proto_rawDescGZIP() []byte {
 	return file_protobuf_messages_proto_rawDescData
 }
 
-var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_protobuf_messages_proto_goTypes = []interface{}{
-	(*Transaction)(nil),     // 0: protobuf.Transaction
-	(*Block)(nil),           // 1: protobuf.Block
-	(*GetPeersRequest)(nil), // 2: protobuf.GetPeersRequest
-	(*PeersResponse)(nil),   // 3: protobuf.PeersResponse
-	(*NewBlockMessage)(nil), // 4: protobuf.NewBlockMessage
-	(*NetworkMessage)(nil),  // 5: protobuf.NetworkMessage
+	(*Block)(nil),             // 0: protobuf.Block
+	(*Transaction)(nil),       // 1: protobuf.Transaction
+	(*Handshake)(nil),         // 2: protobuf.Handshake
+	(*HandshakeResponse)(nil), // 3: protobuf.HandshakeResponse
+	(*NewBlock)(nil),          // 4: protobuf.NewBlock
+	(*GetBlocks)(nil),         // 5: protobuf.GetBlocks
+	(*GetBlocksResponse)(nil), // 6: protobuf.GetBlocksResponse
+	(*NetworkMessage)(nil),    // 7: protobuf.NetworkMessage
 }
 var file_protobuf_messages_proto_depIdxs = []int32{
-	0, // 0: protobuf.Block.transactions:type_name -> protobuf.Transaction
-	1, // 1: protobuf.NewBlockMessage.block:type_name -> protobuf.Block
-	2, // 2: protobuf.NetworkMessage.get_peers:type_name -> protobuf.GetPeersRequest
-	3, // 3: protobuf.NetworkMessage.peers_response:type_name -> protobuf.PeersResponse
-	4, // 4: protobuf.NetworkMessage.new_block:type_name -> protobuf.NewBlockMessage
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	1, // 0: protobuf.Block.transactions:type_name -> protobuf.Transaction
+	0, // 1: protobuf.NewBlock.block:type_name -> protobuf.Block
+	0, // 2: protobuf.GetBlocksResponse.blocks:type_name -> protobuf.Block
+	2, // 3: protobuf.NetworkMessage.handshake:type_name -> protobuf.Handshake
+	3, // 4: protobuf.NetworkMessage.handshake_response:type_name -> protobuf.HandshakeResponse
+	4, // 5: protobuf.NetworkMessage.new_block:type_name -> protobuf.NewBlock
+	5, // 6: protobuf.NetworkMessage.get_blocks:type_name -> protobuf.GetBlocks
+	6, // 7: protobuf.NetworkMessage.get_blocks_response:type_name -> protobuf.GetBlocksResponse
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_protobuf_messages_proto_init() }
@@ -475,18 +685,6 @@ func file_protobuf_messages_proto_init() {
 	}
 	if !protoimpl.UnsafeEnabled {
 		file_protobuf_messages_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*Transaction); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_protobuf_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Block); i {
 			case 0:
 				return &v.state
@@ -498,8 +696,20 @@ func file_protobuf_messages_proto_init() {
 				return nil
 			}
 		}
+		file_protobuf_messages_proto_msgTypes[1].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*Transaction); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 		file_protobuf_messages_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetPeersRequest); i {
+			switch v := v.(*Handshake); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -511,7 +721,7 @@ func file_protobuf_messages_proto_init() {
 			}
 		}
 		file_protobuf_messages_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PeersResponse); i {
+			switch v := v.(*HandshakeResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -523,7 +733,7 @@ func file_protobuf_messages_proto_init() {
 			}
 		}
 		file_protobuf_messages_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*NewBlockMessage); i {
+			switch v := v.(*NewBlock); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -535,6 +745,30 @@ func file_protobuf_messages_proto_init() {
 			}
 		}
 		file_protobuf_messages_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetBlocks); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protobuf_messages_proto_msgTypes[6].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetBlocksResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_protobuf_messages_proto_msgTypes[7].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*NetworkMessage); i {
 			case 0:
 				return &v.state
@@ -547,10 +781,12 @@ func file_protobuf_messages_proto_init() {
 			}
 		}
 	}
-	file_protobuf_messages_proto_msgTypes[5].OneofWrappers = []interface{}{
-		(*NetworkMessage_GetPeers)(nil),
-		(*NetworkMessage_PeersResponse)(nil),
+	file_protobuf_messages_proto_msgTypes[7].OneofWrappers = []interface{}{
+		(*NetworkMessage_Handshake)(nil),
+		(*NetworkMessage_HandshakeResponse)(nil),
 		(*NetworkMessage_NewBlock)(nil),
+		(*NetworkMessage_GetBlocks)(nil),
+		(*NetworkMessage_GetBlocksResponse)(nil),
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -558,7 +794,7 @@ func file_protobuf_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_protobuf_messages_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
