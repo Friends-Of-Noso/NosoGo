@@ -30,16 +30,16 @@ func homeFolder() string {
 type Config struct {
 	// Top level options use an anonymous struct
 	BaseConfig `mapstructure:",squash"`
-	Node       *NodeConfig `mapstructure:"node"`
 	API        *APIConfig  `mapstructure:"api"`
+	Node       *NodeConfig `mapstructure:"node"`
 }
 
 // DefaultConfig Default configurable parameters.
 func DefaultConfig() *Config {
 	return &Config{
 		BaseConfig: DefaultBaseConfig(),
-		Node:       DefaultNodeConfig(),
 		API:        DefaultAPIConfig(),
+		Node:       DefaultNodeConfig(),
 	}
 }
 
@@ -107,18 +107,6 @@ func DefaultBaseConfig() BaseConfig {
 	}
 }
 
-type NodeConfig struct {
-	Address string `mapstructure:"address"`
-	Port    int    `mapstructure:"port"`
-}
-
-func DefaultNodeConfig() *NodeConfig {
-	return &NodeConfig{
-		DefaultNodeAddress,
-		DefaultNodePort,
-	}
-}
-
 type APIConfig struct {
 	Address string `mapstructure:"address"`
 	Port    int    `mapstructure:"port"`
@@ -128,5 +116,17 @@ func DefaultAPIConfig() *APIConfig {
 	return &APIConfig{
 		DefaultAPIAddress,
 		DefaultAPIPort,
+	}
+}
+
+type NodeConfig struct {
+	Address string `mapstructure:"address"`
+	Port    int    `mapstructure:"port"`
+}
+
+func DefaultNodeConfig() *NodeConfig {
+	return &NodeConfig{
+		DefaultNodeAddress,
+		DefaultNodePort,
 	}
 }
