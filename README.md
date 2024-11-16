@@ -1,5 +1,5 @@
 # NosoGo
-[![Build Status](https://github.com/Friends-Of-Noso/NosoGo/workflows/main/badge.svg?branch=main)](https://github.com/Friends-Of-Noso/NosoGo/actions)
+[![Build Status](https://github.com/Friends-Of-Noso/NosoGo/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/Friends-Of-Noso/NosoGo/actions)
 [![Supports Windows](https://img.shields.io/badge/support-Windows-blue?logo=Windows)](https://github.com/Friends-Of-Noso/NosoGo/releases/latest)
 [![Supprts Linux](https://img.shields.io/badge/support-Linux-yellow?logo=Linux)](https://github.com/Friends-Of-Noso/NosoGo/releases/latest)
 [![Supports macOS](https://img.shields.io/badge/support-macOS-black?logo=macOS)](https://github.com/Friends-Of-Noso/NosoGo/releases/latest)
