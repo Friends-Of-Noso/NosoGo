@@ -1,4 +1,4 @@
-name: NosoGo Main Workflow
+name: NosoGo
 
 defaults:
   run:
@@ -20,7 +20,7 @@ on:
 jobs:
 
   build:
-    name: Build Applications
+    name: Test and Build Applications
     runs-on: ubuntu-latest
 
     steps:
@@ -36,6 +36,9 @@ jobs:
 
       - name: Get Protobuf Compiler with Go support
         run: sudo apt install -y protoc-gen-go
+
+      - name: Go Mod Tidy
+        run: go mod tidy
 
       - name: Run tests
         run: make test
