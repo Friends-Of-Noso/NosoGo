@@ -119,7 +119,7 @@ func runNode(cmd *cobra.Command, args []string) {
 		// Block here until we receive a termination signal
 		sig := <-sigChan
 		// Print a new line after the "^C" or "^\"
-		if sig == syscall.SIGINT || sig == syscall.SIGQUIT {
+		if sig == syscall.SIGINT || sig == syscall.SIGQUIT || sig == syscall.SIGKILL {
 			fmt.Println()
 		}
 		log.Infof("Received signal '%s'", sig)

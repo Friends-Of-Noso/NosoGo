@@ -1,8 +1,10 @@
 module github.com/Friends-Of-Noso/NosoGo
 
-go 1.22.5
+go 1.24.4
 
 require (
+	github.com/btcsuite/btcd/btcec/v2 v2.3.5
+	github.com/decred/dcrd/crypto/ripemd160 v1.0.2
 	github.com/libp2p/go-libp2p v0.37.0
 	github.com/libp2p/go-libp2p-kad-dht v0.28.0
 	github.com/libp2p/go-libp2p-pubsub v0.12.0

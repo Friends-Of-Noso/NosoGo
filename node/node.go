@@ -188,6 +188,7 @@ func (n *Node) Start() {
 		log.Debugf("Address: %d, %s", key, value)
 	}
 
+	// TODO This needs to go away on the real thing.
 	if n.seed != "" {
 		// connect to seed
 		log.Infof("Connecting to seed: %s", n.seed)
@@ -247,6 +248,7 @@ func (n *Node) Start() {
 			return
 		case <-ticker.C:
 			if n.seed == "" {
+				// TODO This needs to go away on the real thing.
 				md := md5.New()
 				hash := md.Sum([]byte("MyBlock" + strconv.Itoa(height)))
 				prevHash := md.Sum([]byte("MyBlock" + strconv.Itoa(height-1)))
