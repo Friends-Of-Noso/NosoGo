@@ -10,7 +10,7 @@ else
 endif
 endif
 
-BUILD_FLAGS := -ldflags "-X nosogod/version.GitCommit=`git rev-parse HEAD`"
+BUILD_FLAGS := -ldflags "-X version.GitCommit=`git rev-parse HEAD`"
 
 NOSOGOD_BINARY64 := nosogod-$(GOOS)_amd64
 NOSOGOCLI_BINARY64 := nosogocli-$(GOOS)_amd64
