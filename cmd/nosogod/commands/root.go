@@ -87,16 +87,15 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
-	// fmt.Printf("root.initconfig")
+	// fmt.Fprintf(os.Stderr, "root.initconfig")
 	if !cfg.ValidLogLevels[logLevel] {
-		fmt.Printf("wrong log level: '%s'\n", logLevel)
-		// log.Fatalf("wrong log level1: '%s'", logLevel)
+		fmt.Fprintf(os.Stderr, "wrong log level: '%s'\n", logLevel)
 		os.Exit(1)
 	}
 	if cfgFile != "" {
 		if !utils.FileExists(cfgFile) {
-			fmt.Println("no config file found")
-			fmt.Printf("your choice was '%s'\n", cfgFile)
+			fmt.Fprintln(os.Stderr, "no config file found")
+			fmt.Fprintf(os.Stderr, "your choice was '%s'\n", cfgFile)
 			os.Exit(1)
 		}
 		// Use config file from the flag.
@@ -115,7 +114,7 @@ func initConfig() {
 		beforeLogLevel := logLevel
 		// Read Config
 		if err := viper.ReadInConfig(); err == nil {
-			fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
+			fmt.Fprintf(os.Stderr, "Using config file: %s\n", viper.ConfigFileUsed())
 
 			err := viper.Unmarshal(config)
 			if err != nil {
@@ -128,15 +127,15 @@ func initConfig() {
 			logLevel = beforeLogLevel
 		}
 		if !cfg.ValidLogLevels[logLevel] {
-			fmt.Printf("wrong log level: '%s'\n", logLevel)
+			fmt.Fprintf(os.Stderr, "wrong log level: '%s'\n", logLevel)
 			os.Exit(1)
 		}
 		// Logger
 		utils.EnsureDir(config.GetLogsFolder(), 0755)
 		log.SetFileAndLevel(config.GetLogFile(), logLevel)
 	} else {
-		fmt.Println("no config file found")
-		fmt.Printf("should be '%s'\n", viper.ConfigFileUsed())
+		fmt.Fprintln(os.Stderr, "no config file found")
+		fmt.Fprintf(os.Stderr, "should be '%s'\n", viper.ConfigFileUsed())
 		os.Exit(1)
 	}
 }

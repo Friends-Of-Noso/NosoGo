@@ -54,7 +54,7 @@ func SetFileAndLevel(logFile string, logLevel string) {
 			Timestamp().
 			Logger()
 
-		fmt.Printf("will start logging to: '%s', with log level '%s'\n", logFile, logLevel)
+		fmt.Fprintf(os.Stderr, "will start logging to: '%s', with log level '%s'\n", logFile, logLevel)
 	}
 	// var level zerolog.Level
 	switch logLevel {
