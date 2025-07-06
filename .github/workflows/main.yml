@@ -81,10 +81,10 @@ jobs:
 
       - name: Generate Release Notes
         id: git-cliff
-        uses: orhun/git-cliff-action@v2
+        uses: orhun/git-cliff-action@main
         with:
           config: cliff.toml
-          args: --latest --strip header
+          args: --latest --strip header --latest --no-exec --github-repo ${{ github.repository }}
         env:
           OUTPUT: CHANGES.md
 
