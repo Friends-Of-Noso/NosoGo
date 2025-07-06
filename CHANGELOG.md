@@ -2,6 +2,18 @@
 
 Notable changes up to the last release.
 
+## [unreleased]
+
+### ⚙️ Miscellaneous Tasks
+
+- *(cliff.toml)* New version of the file - ([6137d33](https://github.com/Friends-Of-Noso/NosoGo/commit/6137d33517e9364b4a61a8501195bfedfbbc6518))
+- *(main.yaml)* Fixed repeated params - ([72cdaa9](https://github.com/Friends-Of-Noso/NosoGo/commit/72cdaa9617202d80a1ccd29bdc2fad3b656555b5))
+- *(main.yaml)* Using cliff action @ main - ([c54f1a1](https://github.com/Friends-Of-Noso/NosoGo/commit/c54f1a1b32eb061b599910e2375f08d4af7bce63))
+
+## Contributors
+
+* [@gcarreno](https://github.com/gcarreno)
+
 ## [0.0.3](https://github.com/Friends-Of-Noso/NosoGo/compare/v0.0.2..v0.0.3) - 2025-07-06
 
 ### ⛰️  Features
