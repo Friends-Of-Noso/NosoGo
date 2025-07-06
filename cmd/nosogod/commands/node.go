@@ -3,14 +3,17 @@ package commands
 import (
 	"context"
 	"fmt"
+	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
+	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	cfg "github.com/Friends-Of-Noso/NosoGo/config"
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/Friends-Of-Noso/NosoGo/node"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
@@ -21,7 +24,15 @@ const (
 	cNodeAddress     = "node.address"
 	cNodePortFlag    = "node-port"
 	cNodePort        = "node.port"
-	cSeedFlag        = "seed"
+	cNodeModeFlag    = "node-mode"
+	cNodeMode        = "node.mode"
+
+	cDNSAddressFlag = "dns-address"
+	cDNSAddress     = "dns.address"
+	cDNSPortFlag    = "dns-port"
+	cDNSPort        = "dns.port"
+
+	// cSeedFlag = "seed" // Needs removal in production
 )
 
 // nodeCmd represents the node command
@@ -30,6 +41,19 @@ var (
 		Use:   "node",
 		Short: "Starts the node",
 		//Long:  `Starts the web server.`,
+		Example: `  # Various modes
+  $ nosogod node --node-mode "dns"
+  $ nosogod node --node-mode "seed"
+  $ nosogod node --node-mode "superseed"
+  $ nosogod node --node-mode "node" # This is the default mode
+
+  # Using different node address/port combinations
+  $ nosogod node --node-address "localhost" --node-port 1234
+  $ nosogod node --node-address "127.0.0.1" --node-port 4321
+
+  # In mode DNS using different address/port combinations
+  $ nosogod node --node.mode "dns" --dns-address "localhost" --dns-port 1234
+  $ nosogod node --node.mode "dns" --dns-address "127.0.0.1" --dns-port 4321`,
 		Run: runNode,
 	}
 	seed string
@@ -46,11 +70,29 @@ func init() {
 
 	nodeCmd.Flags().StringVarP(&cfgFile, "config", "c", "", "config file (default is "+config.GetConfigFile()+")")
 
-	nodeCmd.Flags().String(cNodeAddressFlag, config.Node.Address, "Node address")
+	nodeCmd.Flags().String(cNodeAddressFlag, config.Node.Address, "node address")
 	viper.BindPFlag(cNodeAddress, nodeCmd.Flags().Lookup(cNodeAddressFlag))
 
-	nodeCmd.Flags().Int(cNodePortFlag, config.Node.Port, "Node port")
+	nodeCmd.Flags().Int(cNodePortFlag, config.Node.Port, "node port")
 	viper.BindPFlag(cNodePort, nodeCmd.Flags().Lookup(cNodePortFlag))
+
+	modeHelp := fmt.Sprintf("node mode: '%s', '%s', '%s', '%s'", cfg.NodeModeDNS, cfg.NodeModeSeed, cfg.NodeModeSuperNode, cfg.NodeModeNode)
+	nodeCmd.Flags().String(cNodeModeFlag, config.Node.Mode, modeHelp)
+	viper.BindPFlag(cNodeMode, nodeCmd.Flags().Lookup(cNodeModeFlag))
+	err := nodeCmd.RegisterFlagCompletionFunc(cNodeModeFlag,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return []string{cfg.NodeModeDNS, cfg.NodeModeSeed, cfg.NodeModeSuperNode, cfg.NodeModeNode}, cobra.ShellCompDirectiveNoFileComp
+		})
+	if err != nil {
+		log.Fatalf("Error registering flag completion function: %v", err)
+		os.Exit(1)
+	}
+
+	nodeCmd.Flags().String(cDNSAddressFlag, config.DNS.Address, "dns address")
+	viper.BindPFlag(cDNSAddressFlag, nodeCmd.Flags().Lookup(cDNSAddressFlag))
+
+	nodeCmd.Flags().Int(cDNSPortFlag, config.DNS.Port, "dns port")
+	viper.BindPFlag(cDNSPortFlag, nodeCmd.Flags().Lookup(cDNSPortFlag))
 
 	nodeCmd.Flags().StringVarP(&seed, "seed", "s", "", "seed to connect")
 
@@ -61,10 +103,13 @@ func init() {
 
 func runNode(cmd *cobra.Command, args []string) {
 	log.Debug("node called")
-	if utils.FileExists(viper.ConfigFileUsed()) {
-		log.Debugf("Node Address: '%s'", config.Node.Address)
-		log.Debugf("Node Port: %d", config.Node.Port)
 
+	if !cfg.ValidModes[config.Node.Mode] {
+		log.Fatalf("wrong node mode: '%s'", config.Node.Mode)
+		os.Exit(1)
+	}
+
+	if utils.FileExists(viper.ConfigFileUsed()) {
 		// Create a cancellable context.
 		ctx, cancel := context.WithCancel(context.Background())
 
@@ -100,18 +145,52 @@ func runNode(cmd *cobra.Command, args []string) {
 		// 	log.Debugf("Seed multiaddr: %s", seed)
 		// }
 
+		nodeAddressConfig := getFlagString(cmd, cNodeAddressFlag)
+		log.Debugf("nodeAddress: %s", nodeAddressConfig)
+		nodePortConfig := getFlagInt(cmd, cNodePortFlag)
+		log.Debugf("nodePort: %d", nodePortConfig)
+		nodeAddress, err := resolveToMultiaddr(nodeAddressConfig, nodePortConfig)
+		if err != nil {
+			log.Fatalf("unable to resolve to multiaddr: %v", err)
+			os.Exit(1)
+		}
+		nodeMode := getFlagString(cmd, cNodeModeFlag)
+		log.Debugf("nodeMode: %s", nodeMode)
+
+		privKey := config.Node.PrivateKey
+		log.Debugf("privKey: %s", privKey)
+
+		pubKey := config.Node.PublicKey
+		log.Debugf("pubKey: %s", pubKey)
+
+		dnsAddressConfig := getFlagString(cmd, cDNSAddressFlag)
+		log.Debugf("dnsAddrs: %s", dnsAddressConfig)
+		dnsPortConfig := getFlagInt(cmd, cDNSPortFlag)
+		log.Debugf("dnsPort: %d", dnsPortConfig)
+		dnsAddress, err := resolveToString(dnsAddressConfig, dnsPortConfig)
+		if err != nil {
+			log.Fatalf("could not resolve to string: %v", err)
+			os.Exit(1)
+		}
+
 		node, err := node.NewNode(
 			ctx,
 			cancel,
 			&wg,
-			config.Node.Address,
-			config.Node.Port,
+			cmd,
+			nodeAddress,
+			nodePortConfig,
+			privKey,
+			pubKey,
+			nodeMode,
+			dnsAddress,
+			dnsPortConfig,
 			config.GetConfigFolder(),
 			config.GetDatabaseFolder(),
 			seed,
 		)
 		if err != nil {
-			log.Fatalf("Error creating node: %v", err)
+			log.Fatalf("error creating node: %v", err)
 		}
 
 		wg.Add(1)
@@ -122,13 +201,78 @@ func runNode(cmd *cobra.Command, args []string) {
 		if sig == syscall.SIGINT || sig == syscall.SIGQUIT || sig == syscall.SIGKILL {
 			fmt.Println()
 		}
-		log.Infof("Received signal '%s'", sig)
+		log.Infof("received signal '%s'", sig)
 
 		// Node shutdown cancels the context to signal goroutines to stop
-		log.Debug("Shutting down the node...")
 		node.Shutdown()
 
 	} else {
-		log.Fatalf("Cannot find config file '%s', please run the 'init' command first", viper.ConfigFileUsed())
+		log.Fatalf("cannot find config file '%s', please run the 'init' command first", viper.ConfigFileUsed())
 	}
+}
+
+func GetNodePortFlag() string {
+	return cNodePortFlag
+}
+
+func getFlagInt(cmd *cobra.Command, flag string) int {
+	flagValue, err := cmd.Flags().GetInt(flag)
+	if err != nil {
+		log.Fatalf("cannot retrieve flag '%s': %v", flag, err)
+	}
+	return flagValue
+}
+
+func getFlagString(cmd *cobra.Command, flag string) string {
+	flagValue, err := cmd.Flags().GetString(flag)
+	if err != nil {
+		log.Fatalf("cannot retrieve flag '%s': %v", flag, err)
+	}
+	return flagValue
+}
+
+func resolveToMultiaddr(address string, port int) (multiaddr.Multiaddr, error) {
+	ips, err := net.LookupIP(address)
+	if err != nil || len(ips) == 0 {
+		return nil, fmt.Errorf("failed to resolve address %s: %v", address, err)
+	}
+
+	// Try to pick the first IPv4 (if any)
+	var ip net.IP
+	for _, candidate := range ips {
+		if candidate.To4() != nil {
+			ip = candidate
+			break
+		}
+	}
+
+	if ip == nil {
+		return nil, fmt.Errorf("no IPv4 address found for %s", address)
+	}
+
+	// Now build the multiaddr using the resolved IP
+	return multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ip.String(), port))
+}
+
+func resolveToString(address string, port int) (string, error) {
+	ips, err := net.LookupIP(address)
+	if err != nil || len(ips) == 0 {
+		return "", fmt.Errorf("failed to resolve address %s: %v", address, err)
+	}
+
+	// Try to pick the first IPv4 (if any)
+	var ip net.IP
+	for _, candidate := range ips {
+		if candidate.To4() != nil {
+			ip = candidate
+			break
+		}
+	}
+
+	if ip == nil {
+		return "", fmt.Errorf("no IPv4 address found for %s", address)
+	}
+
+	// Now build the multiaddr using the resolved IP
+	return fmt.Sprintf("%s:%d", ip.String(), port), nil
 }

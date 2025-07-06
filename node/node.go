@@ -1,59 +1,77 @@
 package node
 
 import (
-	"bufio"
 	"context"
-	"crypto/md5"
 	"crypto/rand"
-	"encoding/hex"
 	"fmt"
 	"os"
-	"path"
-	"strconv"
+	"runtime"
+	"strings"
 	"sync"
-	"time"
 
-	log "github.com/Friends-Of-Noso/NosoGo/logger"
-	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
-	"github.com/Friends-Of-Noso/NosoGo/utils"
 	"github.com/libp2p/go-libp2p"
-	dht "github.com/libp2p/go-libp2p-kad-dht"
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
-	"google.golang.org/protobuf/proto"
+
+	cfg "github.com/Friends-Of-Noso/NosoGo/config"
+	"github.com/Friends-Of-Noso/NosoGo/dns"
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
+)
+
+const (
+	cNodePortFlag = "node-port"
+)
+
+var (
+	config = cfg.DefaultConfig()
 )
 
 type Node struct {
-	ctx        context.Context
-	cancel     context.CancelFunc
-	wg         *sync.WaitGroup
-	address    string
-	port       int
-	host       host.Host
-	dht        *dht.IpfsDHT
-	pubsub     *pubsub.PubSub
-	blockTopic *pubsub.Topic
-	privateKey crypto.PrivKey
-	publicKey  crypto.PubKey
-	db         *leveldb.DB
-	peers      []peer.AddrInfo
-	seed       string
+	cmd           *cobra.Command
+	ctx           context.Context
+	cancel        context.CancelFunc
+	wg            *sync.WaitGroup
+	address       multiaddr.Multiaddr
+	port          int
+	mode          string
+	p2pHost       host.Host
+	pubSub        *pubsub.PubSub
+	topics        PubSubTopics
+	subscriptions PubSubSubscription
+	privateKey    crypto.PrivKey
+	publicKey     crypto.PubKey
+	db            *leveldb.DB
+	peers         []peer.AddrInfo
+	dns           *dns.DNS
+	dnsAddress    string
+	dnsPort       int
+	seed          string // This needs to go away
+	// dht           *dht.IpfsDHT
 }
 
 func NewNode(
 	ctx context.Context,
 	cancel context.CancelFunc,
 	wg *sync.WaitGroup,
-	address string,
+	cmd *cobra.Command,
+	address multiaddr.Multiaddr,
 	port int,
+	privKey string,
+	pubKey string,
+	mode string,
+	dnsAddress string,
+	dnsPort int,
 	configPath string,
 	dbPath string,
-	seed string,
+	seed string, // This needs to go away
 ) (*Node, error) {
+	// TODO: This entire key thing needs a rethink!!
 	var (
 		privateKey    crypto.PrivKey
 		publicKey     crypto.PubKey
@@ -62,45 +80,19 @@ func NewNode(
 		err           error
 	)
 
+	err = checkPort(port, cNodePortFlag, cfg.DefaultNodePort)
+	if err != nil {
+		log.Fatalf("%v", err)
+		os.Exit(1)
+
+	}
+
 	db, err := leveldb.OpenFile(dbPath, nil)
 	if err != nil {
 		return nil, err
 	}
 
-	if utils.FileExists(path.Join(configPath, "keystore")) {
-		keyFile, err := os.Open(path.Join(configPath, "keystore"))
-		if err != nil {
-			return nil, err
-		}
-		defer keyFile.Close()
-
-		scanner := bufio.NewScanner(keyFile)
-		if scanner.Scan() {
-			configPrivKey = scanner.Text()
-		}
-		if scanner.Scan() {
-			configPubKey = scanner.Text()
-		}
-
-		privRaw, err := crypto.ConfigDecodeKey(configPrivKey)
-		if err != nil {
-			return nil, err
-		}
-		pubRaw, err := crypto.ConfigDecodeKey(configPubKey)
-		if err != nil {
-			return nil, err
-		}
-
-		privateKey, err = crypto.UnmarshalPrivateKey(privRaw)
-		if err != nil {
-			return nil, err
-		}
-		publicKey, err = crypto.UnmarshalPublicKey(pubRaw)
-		if err != nil {
-			return nil, err
-		}
-
-	} else {
+	if strings.HasPrefix(privKey, cfg.DefaultNodeKey) || strings.HasPrefix(pubKey, cfg.DefaultNodeKey) {
 		// Use the port number as the randomness source.
 		// This will always generate the same host ID on multiple executions, if the same port number is used.
 		// Never do this in production code.
@@ -122,38 +114,54 @@ func NewNode(
 			return nil, err
 		}
 
-		configPrivKey := crypto.ConfigEncodeKey(privProto)
-		configPubKey := crypto.ConfigEncodeKey(pubProto)
+		configPrivKey = crypto.ConfigEncodeKey(privProto)
+		configPubKey = crypto.ConfigEncodeKey(pubProto)
 
-		keyFile, err := os.Create(path.Join(configPath, "keystore"))
+		config.Node.PrivateKey = configPrivKey
+		config.Node.PublicKey = configPubKey
+
+		if err := cfg.WriteConfig(viper.ConfigFileUsed(), config); err != nil {
+			log.Fatalf("could save config structure: %v", err)
+		}
+
+	} else {
+		privRaw, err := crypto.ConfigDecodeKey(privKey)
 		if err != nil {
 			return nil, err
 		}
-		defer keyFile.Close()
+		pubRaw, err := crypto.ConfigDecodeKey(pubKey)
+		if err != nil {
+			return nil, err
+		}
 
-		keyFile.WriteString(fmt.Sprintln(configPrivKey))
-		keyFile.WriteString(configPubKey)
-	}
+		privateKey, err = crypto.UnmarshalPrivateKey(privRaw)
+		if err != nil {
+			return nil, err
+		}
+		publicKey, err = crypto.UnmarshalPublicKey(pubRaw)
+		if err != nil {
+			return nil, err
+		}
 
-	addr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", address, port))
-	if err != nil {
-		return nil, err
 	}
 
 	host, err := libp2p.New(
-		libp2p.ListenAddrs(addr),
+		libp2p.ListenAddrs(address),
 		libp2p.Identity(privateKey),
+		// This as implication on DHT
 		libp2p.DisableRelay(),
 	)
 	if err != nil {
 		return nil, err
 	}
 
+	// If we don't have relaying, then the DHT is only good for Seeds/SuperNodes
+	//
 	// Create DHT for peer discovery
-	kdht, err := dht.New(ctx, host)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DHT: %v", err)
-	}
+	// dht, err := dht.New(ctx, host)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to create DHT: %v", err)
+	// }
 
 	// Create pubsub for block propagation
 	ps, err := pubsub.NewGossipSub(ctx, host)
@@ -162,205 +170,89 @@ func NewNode(
 	}
 
 	return &Node{
-		ctx:        ctx,
-		cancel:     cancel,
-		wg:         wg,
-		address:    address,
-		port:       port,
-		host:       host,
-		dht:        kdht,
-		pubsub:     ps,
-		privateKey: privateKey,
-		publicKey:  publicKey,
-		db:         db,
-		peers:      make([]peer.AddrInfo, 0),
-		seed:       seed,
+		ctx:           ctx,
+		cancel:        cancel,
+		wg:            wg,
+		cmd:           cmd,
+		address:       address,
+		port:          port,
+		mode:          mode,
+		dnsAddress:    dnsAddress,
+		dnsPort:       dnsPort,
+		p2pHost:       host,
+		pubSub:        ps,
+		topics:        make(PubSubTopics, 0),
+		subscriptions: make(PubSubSubscription, 0),
+		privateKey:    privateKey,
+		publicKey:     publicKey,
+		db:            db,
+		peers:         make(Peers, 0),
+		seed:          seed,
+		// dht:           dht,
 	}, nil
 }
 
 func (n *Node) Start() {
-	log.Debug("Node.Start() called")
 	defer n.wg.Done()
+	log.Debugf("node.start() called with mode: %s", n.mode)
 
-	log.Infof("Listening on %s/p2p/%s", n.host.Addrs()[0], n.host.ID())
-	log.Debugf("Node ID: %s", n.host.ID())
-	for key, value := range n.host.Addrs() {
-		log.Debugf("Address: %d, %s", key, value)
+	// logLevel, err := n.cmd.Flags().GetString("log-level")
+	// if err != nil {
+	// 	log.Errorf("error getting flag 'log-level': %v", err)
+	// 	n.Shutdown()
+	// }
+	// log.Debugf("log level: %s", logLevel)
+
+	switch n.mode {
+	case cfg.NodeModeDNS:
+		n.runModeDNS()
+	case cfg.NodeModeSeed:
+		n.runModeSeed()
+	case cfg.NodeModeSuperNode:
+		n.runModeSuperNode()
+	case cfg.NodeModeNode:
+		n.runModeNode()
 	}
 
-	// TODO This needs to go away on the real thing.
-	if n.seed != "" {
-		// connect to seed
-		log.Infof("Connecting to seed: %s", n.seed)
-		targetAddr, err := multiaddr.NewMultiaddr(n.seed)
-		// targetAddr, err := multiaddr.NewMultiaddr("/ip4/10.42.0.101/tcp/45050/p2p/12D3KooWKXcHejD288cQi32oqGR3aXEgY2sP3MAgpzwQ7V95CsNt")
-		if err != nil {
-			log.Errorf("invalid seed multiaddr: %v", err)
-		} else {
-			peerInfo, err := peer.AddrInfoFromP2pAddr(targetAddr)
-			if err != nil {
-				log.Errorf("failed to get peer info: %v", err)
-			} else {
-				if err := n.host.Connect(n.ctx, *peerInfo); err != nil {
-					log.Error("failed to connect to seed", err)
-				} else {
-					log.Debugf("Connected to seed '%s'", peerInfo.String())
-					// Should send a GetPeersRequest message now
-				}
-			}
-		}
-	}
-
-	// Bootstrap DHT
-	if err := n.dht.Bootstrap(n.ctx); err != nil {
-		log.Errorf("failed to bootstrap DHT: %v", err)
-		n.Shutdown()
-	}
-
-	// Join block topic
-	blockTopic, err := n.pubsub.Join("blocks")
-	if err != nil {
-		log.Errorf("failed to join blocks topic: %v", err)
-		n.Shutdown()
-	}
-	n.blockTopic = blockTopic
-
-	// Subscribe to block topic
-	blockSub, err := blockTopic.Subscribe()
-	if err != nil {
-		log.Errorf("failed to subscribe to blocks topic: %v", err)
-		n.Shutdown()
-	}
-
-	// Handle incoming blocks
-	n.wg.Add(1)
-	go n.handleBlockSubscription(blockSub)
-
-	ticker := time.NewTicker(time.Second * 5)
-	defer ticker.Stop()
-
-	height := 0
-
-	for {
-		select {
-		case <-n.ctx.Done():
-			log.Debug("Node.Start() exiting")
-			return
-		case <-ticker.C:
-			if n.seed == "" {
-				// TODO This needs to go away on the real thing.
-				md := md5.New()
-				hash := md.Sum([]byte("MyBlock" + strconv.Itoa(height)))
-				prevHash := md.Sum([]byte("MyBlock" + strconv.Itoa(height-1)))
-				block := pb.Block{
-					Hash:      "B" + hex.EncodeToString(hash),
-					Height:    uint64(height),
-					PrevHash:  "B" + hex.EncodeToString(prevHash),
-					Timestamp: time.Now().Unix(),
-				}
-				transaction := pb.Transaction{
-					Hash:     "T" + hex.EncodeToString(hash),
-					Type:     "COINBASE",
-					Sender:   "COINBASE",
-					Receiver: "NBlahBlah",
-					Amount:   1,
-				}
-				block.Transactions = append(block.Transactions, &transaction)
-				height++
-				log.Debugf("Propagating a block %d, %s, %s", block.Height, block.Hash, block.PrevHash)
-				n.propagateBlock(&block)
-			}
-		default:
-			continue
-		}
-	}
 }
 
 func (n *Node) Shutdown() {
-	log.Debug("Node.Shutdown() called")
+	log.Info("node shutting down...")
+
+	// Call the Context cancel function
 	n.cancel()
+
+	// See if there's custom  cleanup for each mode
+	switch n.mode {
+	case cfg.NodeModeDNS:
+		n.shutdownDNS()
+	case cfg.NodeModeSeed:
+		n.shutdownSeed()
+	case cfg.NodeModeSuperNode:
+		n.shutdownSuperNode()
+	case cfg.NodeModeNode:
+		n.shutdownNode()
+	}
+
 	// Wait for all goroutines to finish
-	log.Info("Waiting for threads to finish...")
+	log.Info("waiting for threads to finish...")
 	n.wg.Wait()
+
 	// Close the database
-	log.Info("Closing database...")
+	log.Info("closing database...")
 	n.db.Close()
-	log.Info("Exiting.")
+
+	log.Info("exiting")
 }
 
-func (n *Node) handleBlockSubscription(sub *pubsub.Subscription) {
-	defer n.wg.Done()
-	for {
-		select {
-		case <-n.ctx.Done():
-			log.Debug("Node.handleBlockSubscription() exiting")
-			return
-		default:
-			msg, err := sub.Next(n.ctx)
-			if err != nil {
-				// log.Error("Error reading subscription", err)
-				continue
-			}
+func checkPort(port int, flag string, defaultPort int) error {
+	goos := runtime.GOOS
 
-			// Skip messages from ourselves
-			if msg.ReceivedFrom == n.host.ID() {
-				continue
-			}
-
-			// Unmarshal the message
-			networkMsg := &pb.NetworkMessage{}
-			if err := proto.Unmarshal(msg.Data, networkMsg); err != nil {
-				continue
-			}
-
-			// Handle new block message
-			if newBlock := networkMsg.GetNewBlock(); newBlock != nil {
-				n.handleNewBlock(newBlock.Block)
-			}
+	if goos == "linux" || goos == "darwin" {
+		if port < 1024 && os.Geteuid() != 0 {
+			return fmt.Errorf("port %d requires root privileges on %s; try a port >= 1024 (e.g. --%s %d)", port, goos, flag, defaultPort)
 		}
 	}
-}
 
-func (n *Node) handleNewBlock(block *pb.Block) {
-	log.Infof("Got block(%d): %s, %s", block.Height, block.Hash, block.PrevHash)
-	if len(block.Transactions) > 0 {
-		for index, transaction := range block.Transactions {
-			log.Infof(
-				"Transaction %d, %s, %s, %s, %d",
-				index,
-				transaction.Hash,
-				transaction.Sender,
-				transaction.Receiver,
-				transaction.Amount,
-			)
-		}
-	}
-}
-
-func (n *Node) propagateBlock(block *pb.Block) error {
-	// n.cacheMutex.Lock()
-	// if n.blockCache[block.Hash] {
-	// 	n.cacheMutex.Unlock()
-	// 	return nil
-	// }
-	// n.blockCache[block.Hash] = true
-	// n.cacheMutex.Unlock()
-
-	// Create network message
-	msg := &pb.NetworkMessage{
-		Payload: &pb.NetworkMessage_NewBlock{
-			NewBlock: &pb.NewBlock{
-				Block: block,
-			},
-		},
-	}
-
-	// Serialize the message
-	data, err := proto.Marshal(msg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal block: %v", err)
-	}
-
-	// Publish to the network
-	return n.blockTopic.Publish(n.ctx, data)
+	return nil
 }

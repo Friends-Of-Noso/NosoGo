@@ -3,6 +3,8 @@ package commands
 import (
 	"fmt"
 	"os"
+	"strings"
+	"unicode"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,16 +45,40 @@ func Execute() {
 }
 
 func init() {
+	// log.Debug("root.init")
 	cobra.OnInitialize(initConfig)
 
-	rootCmd.SetVersionTemplate(fmt.Sprintf("%s\n", ver.Title))
+	// Custom Usage Function
+	rootCmd.SetUsageFunc(rootUsageFunc)
+
+	// rootCmd.SetVersionTemplate(fmt.Sprintf("%sd\n", ver.Title))
 
 	// Here you will define your flags and configuration settings.
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	rootCmd.PersistentFlags().StringVarP(&logLevel, cLogLevelFlag, "l", "", "Log Level")
-	viper.BindPFlag("log_level", rootCmd.Flags().Lookup(cLogLevelFlag))
+	logLevelHelp := fmt.Sprintf(
+		// "log level: '%s', '%s', '%s', '%s'",
+		"log level: '%s', '%s'",
+		cfg.LogLevelInfo,
+		// cfg.LogLevelWarn,
+		// cfg.LogLevelError,
+		cfg.LogLevelDebug)
+	rootCmd.PersistentFlags().StringVarP(&logLevel, cLogLevelFlag, "l", config.LogLevel, logLevelHelp)
+	viper.BindPFlag(cLogLevelFlag, rootCmd.Flags().Lookup(cLogLevelFlag))
+	err := nodeCmd.RegisterFlagCompletionFunc(cLogLevelFlag,
+		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+			return []string{
+				cfg.LogLevelInfo,
+				// cfg.LogLevelWarn,
+				// cfg.LogLevelError,
+				cfg.LogLevelDebug,
+			}, cobra.ShellCompDirectiveNoFileComp
+		})
+	if err != nil {
+		log.Fatalf("Error registering flag completion function: %v", err)
+		os.Exit(1)
+	}
 
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
@@ -61,7 +87,18 @@ func init() {
 
 // initConfig reads in config file and ENV variables if set.
 func initConfig() {
+	// fmt.Printf("root.initconfig")
+	if !cfg.ValidLogLevels[logLevel] {
+		fmt.Printf("wrong log level: '%s'\n", logLevel)
+		// log.Fatalf("wrong log level1: '%s'", logLevel)
+		os.Exit(1)
+	}
 	if cfgFile != "" {
+		if !utils.FileExists(cfgFile) {
+			fmt.Println("no config file found")
+			fmt.Printf("your choice was '%s'\n", cfgFile)
+			os.Exit(1)
+		}
 		// Use config file from the flag.
 		viper.SetConfigType("toml")
 		viper.SetConfigFile(cfgFile)
@@ -75,23 +112,112 @@ func initConfig() {
 	viper.AutomaticEnv() // read in environment variables that match
 
 	if utils.FileExists(viper.ConfigFileUsed()) {
-		// Logger
-		if logLevel != "" {
-			log.SetFileAndLevel(config.GetLogFile(), logLevel)
-		}
+		beforeLogLevel := logLevel
 		// Read Config
 		if err := viper.ReadInConfig(); err == nil {
-			log.Infof("Using config file: %s", viper.ConfigFileUsed())
+			fmt.Printf("Using config file: %s\n", viper.ConfigFileUsed())
 
 			err := viper.Unmarshal(config)
 			if err != nil {
-				log.Fatalf("Could not unmarshal config: %s", err)
+				fmt.Printf("Could not unmarshal config: %s\n", err)
+				os.Exit(1)
 			}
 		}
-		if logLevel == "" {
-			log.SetFileAndLevel(config.GetLogFile(), config.LogLevel)
+
+		if beforeLogLevel != config.LogLevel {
+			logLevel = beforeLogLevel
 		}
+		if !cfg.ValidLogLevels[logLevel] {
+			fmt.Printf("wrong log level: '%s'\n", logLevel)
+			os.Exit(1)
+		}
+		// Logger
+		utils.EnsureDir(config.GetLogsFolder(), 0755)
+		log.SetFileAndLevel(config.GetLogFile(), logLevel)
 	} else {
-		log.SetFileAndLevel("", "info")
+		fmt.Println("no config file found")
+		fmt.Printf("should be '%s'\n", viper.ConfigFileUsed())
+		os.Exit(1)
 	}
+}
+
+func rootUsageFunc(cmd *cobra.Command) error {
+	fmt.Print("\033[1mUSAGE\033[0m")
+	if cmd.Runnable() {
+		fmt.Printf("\n  %s", cmd.UseLine())
+	}
+	if cmd.HasAvailableSubCommands() {
+		fmt.Printf("\n  %s [command]", cmd.CommandPath())
+	}
+	if len(cmd.Aliases) > 0 {
+		fmt.Printf("\n\n\033[1mALIASES\033[0m\n")
+		fmt.Printf("  %s", cmd.NameAndAliases())
+	}
+	if cmd.HasExample() {
+		fmt.Printf("\n\n\033[1mEXAMPLES\033[0m\n")
+		fmt.Printf("%s", cmd.Example)
+	}
+	if cmd.HasAvailableSubCommands() {
+		cmds := cmd.Commands()
+		if len(cmd.Groups()) == 0 {
+			fmt.Printf("\n\n\033[1mAVAILABLE COMMANDS\033[0m")
+			for _, subcmd := range cmds {
+				if subcmd.IsAvailableCommand() || subcmd.Name() == "help" {
+					fmt.Printf("\n  %s %s", rpad(subcmd.Name(), subcmd.NamePadding()), subcmd.Short)
+				}
+			}
+		} else {
+			for _, group := range cmd.Groups() {
+				fmt.Printf("\n\n%s", group.Title)
+				for _, subcmd := range cmds {
+					if subcmd.GroupID == group.ID && (subcmd.IsAvailableCommand() || subcmd.Name() == "help") {
+						fmt.Printf("\n  %s %s", rpad(subcmd.Name(), subcmd.NamePadding()), subcmd.Short)
+					}
+				}
+			}
+			if !cmd.AllChildCommandsHaveGroup() {
+				fmt.Printf("\n\n\033[1mADDITIONAL COMMANDS\033[0m")
+				for _, subcmd := range cmds {
+					if subcmd.GroupID == "" && (subcmd.IsAvailableCommand() || subcmd.Name() == "help") {
+						fmt.Printf("\n  %s %s", rpad(subcmd.Name(), subcmd.NamePadding()), subcmd.Short)
+					}
+				}
+			}
+		}
+	}
+	if cmd.HasAvailableLocalFlags() {
+		fmt.Printf("\n\n\033[1mFLAGS\033[0m\n")
+		fmt.Print(trimRightSpace(cmd.LocalFlags().FlagUsages()))
+	}
+	if cmd.HasAvailableInheritedFlags() {
+		fmt.Printf("\n\n\033[1mGLOBAL FLAGS\033[0m\n")
+		fmt.Print(trimRightSpace(cmd.InheritedFlags().FlagUsages()))
+	}
+	if cmd.HasHelpSubCommands() {
+		fmt.Printf("\n\n\033[1mADDITIONAL HELP TOPICS\033[0m")
+		for _, subcmd := range cmd.Commands() {
+			if subcmd.IsAdditionalHelpTopicCommand() {
+				fmt.Printf("\n  %s %s", rpad(subcmd.CommandPath(), subcmd.CommandPathPadding()), subcmd.Short)
+			}
+		}
+	}
+
+	if cmd.HasAvailableSubCommands() {
+		fmt.Printf("\n\nUse \"%s [command] --help\" for more information about a command.", cmd.CommandPath())
+	}
+	fmt.Println()
+	return nil
+}
+
+func trimRightSpace(s string) string {
+	return strings.TrimRightFunc(s, unicode.IsSpace)
+}
+
+func rpad(s string, padding int) string {
+	formattedString := fmt.Sprintf("%%-%ds", padding)
+	return fmt.Sprintf(formattedString, s)
+}
+
+func lpad(s string, padding int) string {
+	return strings.Repeat(" ", padding) + s
 }

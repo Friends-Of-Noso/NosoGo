@@ -3,12 +3,11 @@ package commands
 import (
 	"os"
 
-	ms "github.com/mitchellh/mapstructure"
-	toml "github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
+	cfg "github.com/Friends-Of-Noso/NosoGo/config"
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
@@ -16,7 +15,7 @@ import (
 // initCmd represents the init command
 var initCmd = &cobra.Command{
 	Use:   "init",
-	Short: "Initializes the configuration file",
+	Short: "Initializes the configuration folder, file and the log folder",
 	//Long:  `Initializes the configuration file.`,
 	Run: runInit,
 }
@@ -37,6 +36,7 @@ func init() {
 
 func runInit(cmd *cobra.Command, args []string) {
 	log.Debug("init called")
+
 	if utils.FileExists(config.GetConfigFile()) {
 		log.Fatalf("Config already exists: %s", config.GetConfigFile())
 		os.Exit(1)
@@ -62,13 +62,12 @@ func runInit(cmd *cobra.Command, args []string) {
 	}
 
 	// Write to Config File
-	var outMap map[string]any
-	ms.Decode(config, &outMap)
-	b, err := toml.Marshal(outMap)
-	cobra.CheckErr(err)
-	utils.MustWriteFile(viper.ConfigFileUsed(), b, 0644)
+	err := cfg.WriteConfig(viper.ConfigFileUsed(), config)
+	if err != nil {
+		log.Fatalf("could not save config structure: %v", err)
+	}
 
-	log.Infof("Created config file at '%s'", config.GetConfigFile())
+	// log.Infof("Created config file at '%s'", config.GetConfigFile())
 
 	// Create LevelDB stuff
 	db, err := leveldb.OpenFile(config.GetDatabaseFolder(), nil)

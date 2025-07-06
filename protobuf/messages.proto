@@ -1,7 +1,10 @@
 syntax = "proto3";
-package protobuf;
+
+package nosogo;
+
 option go_package = "./protobuf";
 
+// Block chain
 message Block {
   uint64 height = 1;
   string hash = 2;
@@ -20,6 +23,24 @@ message Transaction {
   uint64 amount = 6;
 }
 
+
+// Blocks Topic
+message NewBlock {
+  Block block = 1;
+}
+
+message NewTransactions {
+  repeated Transaction transactions = 1;
+}
+
+message BlocksSubMessages {
+  oneof payload {
+    NewBlock new_block = 1;
+    NewTransactions new_transactions = 2;
+  }
+}
+
+// Network messages
 message Handshake {
   string version = 1;
 }
@@ -28,13 +49,9 @@ message HandshakeResponse {
   string version = 1;
 }
 
-message NewBlock {
-  Block block = 1;
-}
-
 message GetBlocks {
-  string from_id = 1;
-  string to_id = 2;
+  int64 from_height = 1;
+  int64 to_height = 2;
   int64 height = 3;
 }
 
@@ -42,12 +59,30 @@ message GetBlocksResponse {
   repeated Block blocks = 1;
 }
 
-message NetworkMessage {
+message NetworkMessages {
   oneof payload {
     Handshake handshake = 1;
     HandshakeResponse handshake_response = 2;
-    NewBlock new_block = 3;
-    GetBlocks get_blocks = 4;
-    GetBlocksResponse get_blocks_response = 5;
+    GetBlocks get_blocks = 3;
+    GetBlocksResponse get_blocks_response = 4;
   }
+}
+
+// DNS
+message DNSHost {
+  string address = 1;
+  int32 port = 2;
+  string id = 3;
+}
+
+message DNSHostResponse {
+  DNSHost dns = 1;
+}
+
+message DNSSeedsResponse {
+  repeated DNSHost seeds = 1;
+}
+
+message DNSNodesResponse {
+  repeated DNSHost nodes = 1;
 }

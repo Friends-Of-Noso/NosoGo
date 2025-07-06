@@ -5,8 +5,8 @@ import "fmt"
 var (
 	VersionMajor = 0
 	VersionMinor = 0
-	VersionPatch = 2
-	Version      = "v0.0.2"
+	VersionPatch = 3
+	Version      = "0.0.3"
 	Name         = "nosogo"
 	// GitCommit is set with --ldflags "-X main.gitCommit=$(git rev-parse HEAD)"
 	GitCommit string

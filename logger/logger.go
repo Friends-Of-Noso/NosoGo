@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"time"
@@ -24,18 +25,6 @@ func init() {
 }
 
 func SetFileAndLevel(logFile string, logLevel string) {
-	switch logLevel {
-	case "info":
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	case "warn":
-		zerolog.SetGlobalLevel(zerolog.WarnLevel)
-	case "error":
-		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
-	case "debug":
-		zerolog.SetGlobalLevel(zerolog.DebugLevel)
-	default:
-		zerolog.SetGlobalLevel(zerolog.InfoLevel)
-	}
 
 	// Initialize the logger
 	if logFile == "" {
@@ -65,8 +54,27 @@ func SetFileAndLevel(logFile string, logLevel string) {
 			Timestamp().
 			Logger()
 
-		Infof("Logging to: '%s', with log level '%s'", logFile, logLevel)
+		fmt.Printf("will start logging to: '%s', with log level '%s'\n", logFile, logLevel)
 	}
+	// var level zerolog.Level
+	switch logLevel {
+	case "info":
+		// level = zerolog.InfoLevel
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	case "warn":
+		// level = zerolog.WarnLevel
+		zerolog.SetGlobalLevel(zerolog.WarnLevel)
+	case "error":
+		// level = zerolog.ErrorLevel
+		zerolog.SetGlobalLevel(zerolog.ErrorLevel)
+	case "debug":
+		// level = zerolog.DebugLevel
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	default:
+		// level = zerolog.InfoLevel
+		zerolog.SetGlobalLevel(zerolog.InfoLevel)
+	}
+
 }
 
 func Print(msg string) {
