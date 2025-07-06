@@ -84,7 +84,7 @@ jobs:
         uses: orhun/git-cliff-action@main
         with:
           config: cliff.toml
-          args: --latest --strip header --latest --no-exec --github-repo ${{ github.repository }}
+          args: --latest --strip header --no-exec --github-repo ${{ github.repository }}
         env:
           OUTPUT: CHANGES.md
 
