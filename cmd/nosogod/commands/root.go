@@ -76,7 +76,7 @@ func init() {
 			}, cobra.ShellCompDirectiveNoFileComp
 		})
 	if err != nil {
-		log.Fatalf("Error registering flag completion function: %v", err)
+		fmt.Fprintf(os.Stderr, "Error registering flag completion function: %v", err)
 		os.Exit(1)
 	}
 

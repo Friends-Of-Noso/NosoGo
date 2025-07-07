@@ -14,19 +14,21 @@ message Status {
 message Block {
   uint64 height = 1;
   string hash = 2;
-  string prev_hash = 3;
+  string previous_hash = 3;
   int64 timestamp = 4;
   string merkle_root = 5;
-  repeated Transaction transactions = 6;
 }
 
 message Transaction {
   string hash = 1;
-  string type = 2;
-  int64 timestamp = 3;
-  string sender = 4;
-  string receiver = 5;
-  uint64 amount = 6;
+  uint64 block_height = 2;
+  string type = 3;
+  int64 timestamp = 4;
+  uint64 amount = 5;
+  string pub_key = 6;
+  string verify = 7;
+  string sender = 8;
+  string receiver = 9;
 }
 
 // Peers
@@ -40,13 +42,14 @@ message PeerInfo {
 // Blocks Topic
 message NewBlock {
   Block block = 1;
+  repeated Transaction transactions = 2;
 }
 
 message NewTransactions {
   repeated Transaction transactions = 1;
 }
 
-message BlocksSubMessages {
+message BlocksSubscriptionMessages {
   oneof payload {
     NewBlock new_block = 1;
     NewTransactions new_transactions = 2;
@@ -56,16 +59,12 @@ message BlocksSubMessages {
 // Network messages
 message Handshake {
   string version = 1;
-}
-
-message HandshakeResponse {
-  string version = 1;
+  string mode = 2;
 }
 
 message GetBlocks {
   int64 from_height = 1;
   int64 to_height = 2;
-  int64 height = 3;
 }
 
 message GetBlocksResponse {
@@ -75,14 +74,13 @@ message GetBlocksResponse {
 message NetworkMessages {
   oneof payload {
     Handshake handshake = 1;
-    HandshakeResponse handshake_response = 2;
-    GetBlocks get_blocks = 3;
-    GetBlocksResponse get_blocks_response = 4;
+    GetBlocks get_blocks = 2;
+    GetBlocksResponse get_blocks_response = 3;
   }
 }
 
 // DNS
-message DNSHostResponse {
+message DNSPeerResponse {
   PeerInfo dns = 1;
 }
 

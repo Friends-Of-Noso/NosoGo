@@ -2,6 +2,7 @@ package dns
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"sync"
 
@@ -15,8 +16,8 @@ type (
 )
 
 const (
-	JSON DNSMode = iota
-	PROTOBUF
+	PROTOBUF DNSMode = iota
+	JSON
 )
 
 type (
@@ -34,10 +35,11 @@ type (
 	}
 
 	// Response structures
-	Host struct {
+	PeerInfo struct {
 		Address string `json:"address"`
 		Port    int    `json:"port"`
-		Key     string `json:"key"`
+		Id      string `json:"id"`
+		Mode    string `json:"mode"`
 	}
 )
 
@@ -81,7 +83,7 @@ func NewDNS(
 	mux.HandleFunc("/", notFoundHandler)
 
 	server := &http.Server{
-		Addr:    address, //fmt.Sprintf("%s:%d", address, port),
+		Addr:    address,
 		Handler: mux,
 	}
 	dns.server = server
@@ -89,22 +91,29 @@ func NewDNS(
 	return dns, nil
 }
 
+// Starts the DNS server
 func (dns *DNS) Start() {
 	defer dns.wg.Done()
 
 	log.Infof("dns server: Listening on %s", dns.dnsAddress)
 	if err := dns.server.ListenAndServe(); err != nil {
-		log.Fatalf("DNS Server crashed: %v", err)
+		if errors.Is(err, http.ErrServerClosed) {
+			log.Debug("dns server closed")
+		} else {
+			log.Error("dns server crashed", err)
+		}
 	}
 }
 
+// Shuts down the DNS server
 func (dns *DNS) ShutDown() {
 	log.Info("dns server shuting down")
 	if err := dns.server.Shutdown(dns.ctx); err != nil {
-		log.Fatalf("DNS Shutdown failed: %v", err)
+		log.Error("dns shutdown failed", err)
 	}
 }
 
+// DNS: Handle 404
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
 	http.NotFound(w, r)
 }

@@ -11,8 +11,8 @@ func (dns *DNS) getDNSHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := Host{
-		Address: dns.dnsAddress, Port: dns.dnsPort, Key: dns.nodeId,
+	value := PeerInfo{
+		Address: dns.dnsAddress, Port: dns.dnsPort, Id: dns.nodeId, Mode: "dns",
 	}
 
 	writeJSON(w, value)
@@ -24,9 +24,10 @@ func (dns *DNS) getSeedsHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	seeds := []Host{
-		{Address: "10.0.0.1", Port: 8080, Key: "QmYou'reOnFire"},
-		{Address: "10.0.0.2", Port: 8080, Key: "QmYou'reOnFire"},
+	seeds := []PeerInfo{
+		{Address: "10.0.0.1", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
+		{Address: "10.0.0.2", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
+		{Address: "10.0.0.3", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
 	}
 
 	writeJSON(w, seeds)
@@ -38,9 +39,10 @@ func (dns *DNS) getNodesHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := []Host{
-		{Address: "10.0.0.1", Port: 8080, Key: "QmYou'reOnFire"},
-		{Address: "10.0.0.2", Port: 8080, Key: "QmYou'reOnFire"},
+	value := []PeerInfo{
+		{Address: "10.0.0.4", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
+		{Address: "10.0.0.5", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
+		{Address: "10.0.0.6", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
 	}
 
 	writeJSON(w, value)

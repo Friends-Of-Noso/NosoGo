@@ -84,8 +84,7 @@ func init() {
 			return []string{cfg.NodeModeDNS, cfg.NodeModeSeed, cfg.NodeModeSuperNode, cfg.NodeModeNode}, cobra.ShellCompDirectiveNoFileComp
 		})
 	if err != nil {
-		log.Fatalf("Error registering flag completion function: %v", err)
-		os.Exit(1)
+		log.Error("Error registering flag completion function", err)
 	}
 
 	nodeCmd.Flags().String(cDNSAddressFlag, config.DNS.Address, "dns address")
@@ -106,7 +105,6 @@ func runNode(cmd *cobra.Command, args []string) {
 
 	if !cfg.ValidModes[config.Node.Mode] {
 		log.Fatalf("wrong node mode: '%s'", config.Node.Mode)
-		os.Exit(1)
 	}
 
 	if utils.FileExists(viper.ConfigFileUsed()) {
@@ -152,7 +150,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		nodeAddress, err := resolveToMultiaddr(nodeAddressConfig, nodePortConfig)
 		if err != nil {
 			log.Fatalf("unable to resolve to multiaddr: %v", err)
-			os.Exit(1)
 		}
 		nodeMode := getFlagString(cmd, cNodeModeFlag)
 		log.Debugf("nodeMode: %s", nodeMode)
@@ -170,7 +167,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		dnsAddress, err := resolveToString(dnsAddressConfig, dnsPortConfig)
 		if err != nil {
 			log.Fatalf("could not resolve to string: %v", err)
-			os.Exit(1)
 		}
 
 		node, err := node.NewNode(

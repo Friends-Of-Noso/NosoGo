@@ -39,14 +39,15 @@ func (n *Node) runModeDNS() {
 
 	err := checkPort(n.dnsPort, cDNSPortFlag, cfg.DefaultDNSPort)
 	if err != nil {
-		log.Fatalf("%v", err)
+		log.Error("error checking port", err)
 		n.Shutdown()
 	}
 
 	nodeID := fmt.Sprintf("%s", n.p2pHost.ID())
 	dnsServer, err := dns.NewDNS(n.ctx, n.wg, n.cmd, n.dnsAddress, n.dnsPort, n.address, n.port, nodeID, dns.JSON)
 	if err != nil {
-		log.Fatalf("could not create DNS server: %v", err)
+		log.Error("could not create DNS server", err)
+		n.Shutdown()
 	}
 
 	n.dns = dnsServer

@@ -1,6 +1,7 @@
 package commands
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -38,7 +39,7 @@ func runInit(cmd *cobra.Command, args []string) {
 	log.Debug("init called")
 
 	if utils.FileExists(config.GetConfigFile()) {
-		log.Fatalf("Config already exists: %s", config.GetConfigFile())
+		fmt.Fprintf(os.Stderr, "Config already exists: %s", config.GetConfigFile())
 		os.Exit(1)
 	}
 
@@ -58,13 +59,15 @@ func runInit(cmd *cobra.Command, args []string) {
 	viper.SetConfigType("toml")
 	viper.SetConfigFile(config.GetConfigFile())
 	if err := viper.SafeWriteConfig(); err != nil {
-		log.Fatalf("Error saving config file: '%s'", err)
+		fmt.Fprintf(os.Stderr, "error saving config file: '%s'", err)
+		os.Exit(1)
 	}
 
 	// Write to Config File
 	err := cfg.WriteConfig(viper.ConfigFileUsed(), config)
 	if err != nil {
-		log.Fatalf("could not save config structure: %v", err)
+		fmt.Fprintf(os.Stderr, "could not save config structure: %v", err)
+		os.Exit(1)
 	}
 
 	// log.Infof("Created config file at '%s'", config.GetConfigFile())
@@ -72,7 +75,8 @@ func runInit(cmd *cobra.Command, args []string) {
 	// Create LevelDB stuff
 	db, err := leveldb.OpenFile(config.GetDatabaseFolder(), nil)
 	if err != nil {
-		log.Fatalf("Error creating database: %v", err)
+		fmt.Fprintf(os.Stderr, "Error creating database: %v", err)
+		os.Exit(1)
 	}
 	defer db.Close()
 

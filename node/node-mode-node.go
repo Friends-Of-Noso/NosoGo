@@ -1,16 +1,13 @@
 package node
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"strconv"
 	"time"
 
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
-	"github.com/Friends-Of-Noso/NosoGo/protobuf"
+	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 func (n *Node) runModeNode() {
@@ -29,10 +26,10 @@ func (n *Node) runModeNode() {
 
 		// targetAddr, err := multiaddr.NewMultiaddr("/ip4/10.42.0.101/tcp/45050/p2p/12D3KooWKXcHejD288cQi32oqGR3aXEgY2sP3MAgpzwQ7V95CsNt")
 		if targetAddr, err := multiaddr.NewMultiaddr(n.seed); err != nil {
-			log.Errorf("invalid seed multiaddr: %v", err)
+			log.Error("invalid seed multiaddr", err)
 		} else {
 			if peerInfo, err := peer.AddrInfoFromP2pAddr(targetAddr); err != nil {
-				log.Errorf("failed to get peer info: %v", err)
+				log.Error("failed to get peer info", err)
 			} else {
 				if err := n.p2pHost.Connect(n.ctx, *peerInfo); err != nil {
 					log.Error("failed to connect to seed", err)
@@ -46,14 +43,14 @@ func (n *Node) runModeNode() {
 
 	// Bootstrap DHT
 	// if err := n.dht.Bootstrap(n.ctx); err != nil {
-	// 	log.Errorf("failed to bootstrap DHT: %v", err)
+	// 	log.Error("failed to bootstrap DHT", err)
 	// 	n.Shutdown()
 	// }
 
 	// Join blocks topic
 	blockTopic, err := n.pubSub.Join(BLOCKS_SUB)
 	if err != nil {
-		log.Errorf("failed to join blocks topic: %v", err)
+		log.Error("failed to join blocks topic", err)
 		n.Shutdown()
 	}
 	n.topics[BLOCKS_SUB] = blockTopic
@@ -61,7 +58,7 @@ func (n *Node) runModeNode() {
 	// Subscribe to block topic
 	blockSub, err := blockTopic.Subscribe()
 	if err != nil {
-		log.Errorf("failed to subscribe to blocks topic: %v", err)
+		log.Error("failed to subscribe to blocks topic", err)
 		n.Shutdown()
 	}
 
@@ -89,26 +86,81 @@ func (n *Node) runModeNode() {
 			if n.seed != "" {
 				continue
 			}
-			md := md5.New()
-			hash := md.Sum([]byte("MyBlock" + strconv.Itoa(height)))
-			prevHash := md.Sum([]byte("MyBlock" + strconv.Itoa(height-1)))
-			block := protobuf.Block{
-				Hash:      "B" + hex.EncodeToString(hash),
-				Height:    uint64(height),
-				PrevHash:  "B" + hex.EncodeToString(prevHash),
-				Timestamp: time.Now().Unix(),
+			block := &pb.Block{
+				Height:       uint64(height),
+				PreviousHash: "BPreviousHash",
+				Timestamp:    time.Now().Unix(),
 			}
-			transaction := protobuf.Transaction{
-				Hash:     "T" + hex.EncodeToString(hash),
-				Type:     "COINBASE",
-				Sender:   "COINBASE",
-				Receiver: "NBlahBlah",
-				Amount:   1,
+			block.SetHash()
+			// Store new block
+			blockKey := n.sm.BlockKey(block.Height)
+			blockStorage := n.sm.BlockStorage()
+			if err := blockStorage.Put(blockKey, block); err != nil {
+				log.Error("could not store block on database", err)
+				continue
 			}
-			block.Transactions = append(block.Transactions, &transaction)
+
+			transaction := &pb.Transaction{
+				BlockHeight: block.Height,
+				Type:        "COINBASE",
+				Timestamp:   time.Now().Unix(),
+				PubKey:      "badbeef",
+				Verify:      "badbeef",
+				Sender:      "COINBASE",
+				Receiver:    "NReceiver",
+				Amount:      100_000_000, // Coin has 8 decimals
+			}
+			transaction.SetHash()
+
+			// Store new transaction
+			transactionKey := n.sm.TransactionKey(transaction.BlockHeight, transaction.Hash)
+			transactionStorage := n.sm.TransactionStorage()
+			if err := transactionStorage.Put(transactionKey, transaction); err != nil {
+				log.Error("could not store transaction on database", err)
+				continue
+			}
+
+			newBlock := &pb.NewBlock{
+				Block: block,
+				Transactions: []*pb.Transaction{
+					transaction,
+				},
+			}
 			height++
-			log.Debugf("propagating a block %d, %s, %s", block.Height, block.Hash, block.PrevHash)
-			n.propagateBlock(&block)
+			log.Debugf(
+				"propagating a block %d, %s, %s",
+				block.Height,
+				block.Hash,
+				block.PreviousHash,
+			)
+			n.propagateNewBlock(newBlock)
+
+			transaction.BlockHeight = 0
+			transaction.Type = "spend"
+			transaction.Timestamp = time.Now().Unix()
+			transaction.Sender = "NSender"
+			transaction.Amount = 10_000_000_000
+			transaction.SetHash()
+			transactionKey = n.sm.TransactionKey(transaction.BlockHeight, transaction.Hash)
+			pendingTransactionStorage := n.sm.PendingTransactionStorage()
+			if err := pendingTransactionStorage.Put(transactionKey, transaction); err != nil {
+				log.Error("could not store transaction on database", err)
+				continue
+			}
+			newTransactions := &pb.NewTransactions{
+				Transactions: []*pb.Transaction{
+					transaction,
+				},
+			}
+
+			log.Debugf(
+				"propagating a transaction %d, %s, %s",
+				transaction.BlockHeight,
+				transaction.Hash,
+				transaction.Type,
+			)
+			n.propagateNewTransactions(newTransactions)
+
 		default:
 			continue
 		}

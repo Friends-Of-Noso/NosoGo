@@ -16,11 +16,12 @@ func (dns *DNS) getDNSHandlerProtoBuf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := &protobuf.DNSHostResponse{
+	value := &protobuf.DNSPeerResponse{
 		Dns: &protobuf.PeerInfo{
 			Address: dns.dnsAddress,
 			Port:    int32(dns.dnsPort),
 			Id:      dns.nodeId,
+			Mode:    "dns",
 		},
 	}
 
@@ -35,9 +36,9 @@ func (dns *DNS) getSeedsHandlerProtoBuf(w http.ResponseWriter, r *http.Request) 
 
 	value := &protobuf.DNSSeedsResponse{
 		Seeds: []*protobuf.PeerInfo{
-			{Address: "10.0.0.1", Port: 8080, Id: "QmYou'reOnFireDNS", Mode: "seed"},
+			{Address: "10.0.0.1", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
 			{Address: "10.0.0.2", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
-			{Address: "10.0.0.3", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "seed"},
+			{Address: "10.0.0.3", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
 		},
 	}
 
@@ -52,8 +53,8 @@ func (dns *DNS) getNodesHandlerProtoBuf(w http.ResponseWriter, r *http.Request) 
 
 	value := &protobuf.DNSNodesResponse{
 		Nodes: []*protobuf.PeerInfo{
-			{Address: "10.0.0.4", Port: 8080, Id: "QmYou'reOnFireDNS", Mode: "node"},
-			{Address: "10.0.0.5", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "node"},
+			{Address: "10.0.0.4", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
+			{Address: "10.0.0.5", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
 			{Address: "10.0.0.6", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
 		},
 	}

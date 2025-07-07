@@ -117,7 +117,7 @@ func (c *Config) GetDatabaseFolder() string {
 func homeFolder() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		log.Fatalf("could not find homedir: %v", err)
+		fmt.Fprintf(os.Stderr, "could not find homedir: %v", err)
 		os.Exit(1)
 	}
 

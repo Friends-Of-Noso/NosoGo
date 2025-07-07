@@ -4,8 +4,6 @@ import (
 	"context"
 	"crypto/rand"
 	"fmt"
-	"os"
-	"runtime"
 	"strings"
 	"sync"
 
@@ -17,11 +15,13 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"github.com/syndtr/goleveldb/leveldb"
+	"google.golang.org/protobuf/proto"
 
 	cfg "github.com/Friends-Of-Noso/NosoGo/config"
 	"github.com/Friends-Of-Noso/NosoGo/dns"
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
+	"github.com/Friends-Of-Noso/NosoGo/store"
 )
 
 const (
@@ -46,7 +46,7 @@ type Node struct {
 	subscriptions PubSubSubscription
 	privateKey    crypto.PrivKey
 	publicKey     crypto.PubKey
-	db            *leveldb.DB
+	sm            *store.StorageManager
 	peers         []peer.AddrInfo
 	dns           *dns.DNS
 	dnsAddress    string
@@ -83,11 +83,9 @@ func NewNode(
 	err = checkPort(port, cNodePortFlag, cfg.DefaultNodePort)
 	if err != nil {
 		log.Fatalf("%v", err)
-		os.Exit(1)
-
 	}
 
-	db, err := leveldb.OpenFile(dbPath, nil)
+	sm, err := store.NewStorageManager(dbPath)
 	if err != nil {
 		return nil, err
 	}
@@ -185,7 +183,7 @@ func NewNode(
 		subscriptions: make(PubSubSubscription, 0),
 		privateKey:    privateKey,
 		publicKey:     publicKey,
-		db:            db,
+		sm:            sm,
 		peers:         make(Peers, 0),
 		seed:          seed,
 		// dht:           dht,
@@ -198,7 +196,7 @@ func (n *Node) Start() {
 
 	// logLevel, err := n.cmd.Flags().GetString("log-level")
 	// if err != nil {
-	// 	log.Errorf("error getting flag 'log-level': %v", err)
+	// 	log.Error("error getting flag 'log-level'", err)
 	// 	n.Shutdown()
 	// }
 	// log.Debugf("log level: %s", logLevel)
@@ -240,19 +238,45 @@ func (n *Node) Shutdown() {
 
 	// Close the database
 	log.Info("closing database...")
-	n.db.Close()
+	n.sm.Close()
 
 	log.Info("exiting")
 }
 
-func checkPort(port int, flag string, defaultPort int) error {
-	goos := runtime.GOOS
-
-	if goos == "linux" || goos == "darwin" {
-		if port < 1024 && os.Geteuid() != 0 {
-			return fmt.Errorf("port %d requires root privileges on %s; try a port >= 1024 (e.g. --%s %d)", port, goos, flag, defaultPort)
-		}
+// Propagates a new block
+func (n *Node) propagateNewBlock(newblock *pb.NewBlock) error {
+	// Create network message
+	msg := &pb.BlocksSubscriptionMessages{
+		Payload: &pb.BlocksSubscriptionMessages_NewBlock{
+			NewBlock: newblock,
+		},
 	}
 
-	return nil
+	// Serialize the message
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal block: %v", err)
+	}
+
+	// Publish to the network
+	return n.topics[BLOCKS_SUB].Publish(n.ctx, data)
+}
+
+// Propagates a new block
+func (n *Node) propagateNewTransactions(newTransactions *pb.NewTransactions) error {
+	// Create network message
+	msg := &pb.BlocksSubscriptionMessages{
+		Payload: &pb.BlocksSubscriptionMessages_NewTransactions{
+			NewTransactions: newTransactions,
+		},
+	}
+
+	// Serialize the message
+	data, err := proto.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("failed to marshal block: %v", err)
+	}
+
+	// Publish to the network
+	return n.topics[BLOCKS_SUB].Publish(n.ctx, data)
 }

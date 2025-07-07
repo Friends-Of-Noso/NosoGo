@@ -1,4 +1,4 @@
-package storage
+package store
 
 import (
 	"fmt"
@@ -13,10 +13,11 @@ import (
 
 // Prefixes for different data types
 const (
-	StatusPrefix      = "status:"
-	BlockPrefix       = "block:"
-	TransactionPrefix = "tx:"
-	PeerInfoPrefix    = "peer:"
+	StatusPrefix             = "status:"
+	BlockPrefix              = "block:"
+	TransactionPrefix        = "transaction:"
+	PendingTransactionPrefix = "pending:"
+	PeerInfoPrefix           = "peer:"
 )
 
 // ProtoMessage interface for protobuf messages
@@ -30,8 +31,8 @@ type Storage[T ProtoMessage] struct {
 	prefix string
 }
 
-// NewStorage creates a new generic storage instance
-func NewStorage[T ProtoMessage](db *leveldb.DB, prefix string) *Storage[T] {
+// newStorage creates a new generic storage instance
+func newStorage[T ProtoMessage](db *leveldb.DB, prefix string) *Storage[T] {
 	return &Storage[T]{
 		db:     db,
 		prefix: prefix,
@@ -183,32 +184,36 @@ func (sm *StorageManager) GetDB() *leveldb.DB {
 
 // Helper functions for creating specific storage instances
 func (sm *StorageManager) StatusStorage() *Storage[*pb.Block] {
-	return NewStorage[*pb.Block](sm.db, StatusPrefix)
+	return newStorage[*pb.Block](sm.db, StatusPrefix)
 }
 
 func (sm *StorageManager) BlockStorage() *Storage[*pb.Block] {
-	return NewStorage[*pb.Block](sm.db, BlockPrefix)
+	return newStorage[*pb.Block](sm.db, BlockPrefix)
 }
 
 func (sm *StorageManager) TransactionStorage() *Storage[*pb.Transaction] {
-	return NewStorage[*pb.Transaction](sm.db, TransactionPrefix)
+	return newStorage[*pb.Transaction](sm.db, TransactionPrefix)
+}
+
+func (sm *StorageManager) PendingTransactionStorage() *Storage[*pb.Transaction] {
+	return newStorage[*pb.Transaction](sm.db, PendingTransactionPrefix)
 }
 
 func (sm *StorageManager) PeerInfoStorage() *Storage[*pb.PeerInfo] {
-	return NewStorage[*pb.PeerInfo](sm.db, PeerInfoPrefix)
+	return newStorage[*pb.PeerInfo](sm.db, PeerInfoPrefix)
 }
 
 // Utility functions for key generation
-func BlockKey(height uint64) string {
+func (sm *StorageManager) BlockKey(height uint64) string {
 	return fmt.Sprintf("%016d", height) // Zero-padded for proper ordering
 }
 
-func TransactionKey(blockHeight uint64, txHash string) string {
+func (sm *StorageManager) TransactionKey(blockHeight uint64, txHash string) string {
 	return fmt.Sprintf("%016d:%s", blockHeight, txHash)
 }
 
-func PeerKey(address string, port uint32) string {
-	return fmt.Sprintf("%s:%d", address, port)
+func (sm *StorageManager) PeerKey(address string, id string) string {
+	return fmt.Sprintf("%s:%s", address, id)
 }
 
 // Range query helpers

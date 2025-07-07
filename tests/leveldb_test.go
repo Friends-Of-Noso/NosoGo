@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
-	storage "github.com/Friends-Of-Noso/NosoGo/store"
+	"github.com/Friends-Of-Noso/NosoGo/store"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
@@ -23,7 +23,7 @@ func TestBlock(t *testing.T) {
 		}
 	}
 
-	sm, err := storage.NewStorageManager(dbPath)
+	sm, err := store.NewStorageManager(dbPath)
 	if err != nil {
 		t.Errorf("could not create storage manager in '%s'", dbPath)
 	}
@@ -31,12 +31,12 @@ func TestBlock(t *testing.T) {
 
 	blockStorage := sm.BlockStorage()
 	block := &pb.Block{
-		Height:   1,
-		Hash:     "Block1Hash",
-		PrevHash: "Block0Hash",
+		Height:       1,
+		Hash:         "Block1Hash",
+		PreviousHash: "Block0Hash",
 	}
 
-	key := storage.BlockKey(block.Height)
+	key := sm.BlockKey(block.Height)
 	if err := blockStorage.Put(key, block); err != nil {
 		t.Errorf("failed to store block: %v", err)
 	}
@@ -55,8 +55,8 @@ func TestBlock(t *testing.T) {
 		t.Errorf("mismatch hash: wanted '%s', got '%s'", block.Hash, retrievedBlock.Hash)
 	}
 
-	if block.PrevHash != retrievedBlock.PrevHash {
-		t.Errorf("mismatch previous hash: wanted '%s,' got '%s'", block.PrevHash, retrievedBlock.PrevHash)
+	if block.PreviousHash != retrievedBlock.PreviousHash {
+		t.Errorf("mismatch previous hash: wanted '%s,' got '%s'", block.PreviousHash, retrievedBlock.PreviousHash)
 	}
 }
 
@@ -79,7 +79,7 @@ func createBlocks(b *testing.B, count uint64) {
 		}
 	}
 
-	sm, err := storage.NewStorageManager(dbPath)
+	sm, err := store.NewStorageManager(dbPath)
 	if err != nil {
 		b.Errorf("could not create storage manager in '%s'", dbPath)
 	}
@@ -91,19 +91,19 @@ func createBlocks(b *testing.B, count uint64) {
 
 		if i == 0 {
 			block = &pb.Block{
-				Height:   uint64(i),
-				Hash:     fmt.Sprintf("Block%dHash", i),
-				PrevHash: "",
+				Height:       uint64(i),
+				Hash:         fmt.Sprintf("Block%dHash", i),
+				PreviousHash: "",
 			}
 		} else {
 			block = &pb.Block{
-				Height:   uint64(i),
-				Hash:     fmt.Sprintf("Block%dHash", i),
-				PrevHash: fmt.Sprintf("Block%dHash", i-1),
+				Height:       uint64(i),
+				Hash:         fmt.Sprintf("Block%dHash", i),
+				PreviousHash: fmt.Sprintf("Block%dHash", i-1),
 			}
 		}
 
-		key := storage.BlockKey(block.Height)
+		key := sm.BlockKey(block.Height)
 		if err := blockStorage.Put(key, block); err != nil {
 			b.Errorf("failed to store block: %v", err)
 		}
@@ -111,7 +111,7 @@ func createBlocks(b *testing.B, count uint64) {
 }
 
 func readBlocks(b *testing.B, count uint64) {
-	sm, err := storage.NewStorageManager(dbPath)
+	sm, err := store.NewStorageManager(dbPath)
 	if err != nil {
 		b.Errorf("could not create storage manager in '%s'", dbPath)
 	}
@@ -121,7 +121,7 @@ func readBlocks(b *testing.B, count uint64) {
 
 	block := &pb.Block{}
 	for i := range count {
-		key := storage.BlockKey(i)
+		key := sm.BlockKey(i)
 		if err := blockStorage.Get(key, block); err != nil {
 			b.Errorf("Failed to retrieve block: %v", err)
 		}
