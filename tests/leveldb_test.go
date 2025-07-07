@@ -3,7 +3,6 @@ package tests
 import (
 	"errors"
 	"fmt"
-	"os"
 	"testing"
 
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
@@ -438,7 +437,7 @@ func getBlockZero() *pb.Block {
 func databaseReset() error {
 	// Remove test data, start fresh
 	if utils.FileExists(dbPath) {
-		err := os.RemoveAll(dbPath)
+		err := utils.RemoveGlob(dbPath + "/*")
 		if err != nil {
 			return err
 		}

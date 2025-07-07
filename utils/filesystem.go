@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 func EnsureDir(dir string, mode os.FileMode) error {
@@ -30,4 +31,18 @@ func MustWriteFile(filePath string, contents []byte, mode os.FileMode) error {
 		return fmt.Errorf("function MustWriteFile failed: %v", err)
 	}
 	return nil
+}
+
+func RemoveGlob(path string) (err error) {
+	contents, err := filepath.Glob(path)
+	if err != nil {
+		return
+	}
+	for _, item := range contents {
+		err = os.RemoveAll(item)
+		if err != nil {
+			return
+		}
+	}
+	return
 }
