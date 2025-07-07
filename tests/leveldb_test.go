@@ -64,8 +64,8 @@ func TestBlockPutGet(t *testing.T) {
 		t.Fatalf("mismatch previous hash: wanted '%s,' got '%s'", block.PreviousHash, retrievedBlock.PreviousHash)
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test retrieving a list of blocks with correct data
@@ -94,8 +94,8 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 		height++
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test retrieving a list of blocks with incorrect data
@@ -124,8 +124,8 @@ func TestBlocksStorageListIncorrect(t *testing.T) {
 		height++
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test retrieving a list of blocks with values with correct data
@@ -150,15 +150,15 @@ func TestBlocksStorageListWithValuesCorrect(t *testing.T) {
 	var height uint64 = 0
 	for _, block := range blocks {
 		if height != block.Height {
-			// closeStorageManager()
 			// databaseResetT(t)
+			// closeStorageManager()
 			t.Errorf("list out of order: wanted '%d', got '%d'", height, block.Height)
 		}
 		height++
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test retrieving a list of blocks with values with incorrect data
@@ -183,15 +183,15 @@ func TestBlocksStorageListWithValuesIncorrect(t *testing.T) {
 	var height uint64 = 0
 	for _, block := range blocks {
 		if height != block.Height {
-			closeStorageManager()
 			databaseResetT(t)
+			closeStorageManager()
 			return
 		}
 		height++
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test that mimics a first run with clean database
@@ -209,8 +209,8 @@ func TestStartupSequenceFirstRun(t *testing.T) {
 		t.Errorf("failed the startup: %v", err)
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test that mimics a normal run with correct data
@@ -230,8 +230,8 @@ func TestCheckBlockChainWithCorrectData(t *testing.T) {
 		t.Errorf("failed the startup: %v", err)
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Test that mimics a normal run with correct data
@@ -251,8 +251,8 @@ func TestCheckBlockChainWithIncorrectData(t *testing.T) {
 		t.Errorf("failed the startup: %v", err)
 	}
 
-	closeStorageManager()
 	databaseResetT(t)
+	closeStorageManager()
 }
 
 // Benchmark that creates 1 thousand blocks
@@ -303,8 +303,8 @@ func startUp(t *testing.T) error {
 	// Check if we have any transactions
 	transactionsCount, err := transactionStorage.Count()
 	if err != nil {
-		closeStorageManager()
 		databaseResetT(t)
+		closeStorageManager()
 		return err
 	}
 
@@ -317,14 +317,14 @@ func startUp(t *testing.T) error {
 			// Attempt to rescan the database
 			if err := reScanBlockChain(); err != nil {
 				// Ok, data is well corrupted
-				closeStorageManager()
 				databaseResetT(t)
+				closeStorageManager()
 				return err
 			}
 		} else {
 			if err := initiateBlockChain(); err != nil {
-				closeStorageManager()
 				databaseResetT(t)
+				closeStorageManager()
 				return err
 			}
 		}
@@ -333,8 +333,8 @@ func startUp(t *testing.T) error {
 			// Attempt to rescan the database
 			if err := reScanBlockChain(); err != nil {
 				// Ok, data is well corrupted
-				closeStorageManager()
 				databaseResetT(t)
+				closeStorageManager()
 				return err
 			}
 		}
@@ -437,31 +437,32 @@ func databaseReset() error {
 	// Remove test data, start fresh
 
 	// Delete Status
-	if err := statusStorage.Delete(statusKey); err != nil {
-		return err
-	}
+	// if err := statusStorage.Delete(statusKey); err != nil {
+	// 	return err
+	// }
 
 	// Delete blocks
-	blocks, err := blockStorage.ListKeys()
-	if err != nil {
-		return err
-	}
-	for _, key := range blocks {
-		if err := blockStorage.Delete(key); err != nil {
-			return err
-		}
-	}
+	// blocks, err := blockStorage.ListValues(func() *pb.Block { return &pb.Block{} })
+	// if err != nil {
+	// 	return err
+	// }
+	// for _, block := range blocks {
+	// 	key := sm.BlockKey(block.Height)
+	// 	if err := blockStorage.Delete(key); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	// Delete transactions
-	transactions, err := transactionStorage.ListKeys()
-	if err != nil {
-		return err
-	}
-	for _, key := range transactions {
-		if err := transactionStorage.Delete(key); err != nil {
-			return err
-		}
-	}
+	// transactions, err := transactionStorage.ListKeys()
+	// if err != nil {
+	// 	return err
+	// }
+	// for _, key := range transactions {
+	// 	if err := transactionStorage.Delete(key); err != nil {
+	// 		return err
+	// 	}
+	// }
 
 	return nil
 }
@@ -640,6 +641,6 @@ func readBlocks(b *testing.B, count uint64) {
 			b.Fatalf("Failed to retrieve block: %v", err)
 		}
 	}
-	closeStorageManager()
 	databaseResetB(b)
+	closeStorageManager()
 }
