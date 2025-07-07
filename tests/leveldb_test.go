@@ -18,10 +18,10 @@ const (
 var (
 	sm *store.StorageManager
 
-	statusStorage      *store.Storage[*pb.Status]      = nil
-	blockStorage       *store.Storage[*pb.Block]       = nil
-	transactionStorage *store.Storage[*pb.Transaction] = nil
-	// peerInfoStorage    *store.Storage[*pb.PeerInfo]    = nil
+	statusStorage      *store.Storage[*pb.Status]
+	blockStorage       *store.Storage[*pb.Block]
+	transactionStorage *store.Storage[*pb.Transaction]
+	// peerInfoStorage    *store.Storage[*pb.PeerInfo]
 )
 
 // Test storing and retrieving a block
