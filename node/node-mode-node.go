@@ -7,7 +7,6 @@ import (
 	"github.com/multiformats/go-multiaddr"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
-	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 func (n *Node) runModeNode() {
@@ -71,7 +70,7 @@ func (n *Node) runModeNode() {
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
-	height := 0
+	var height uint64 = 0
 
 	for {
 		select {
@@ -82,84 +81,8 @@ func (n *Node) runModeNode() {
 			// if config.LogLevel != "debug" {
 			// 	continue
 			// }
-			// TODO This needs to go away on the real thing.
-			if n.seed != "" {
-				continue
-			}
-			block := &pb.Block{
-				Height:       uint64(height),
-				PreviousHash: "BPreviousHash",
-				Timestamp:    time.Now().Unix(),
-			}
-			block.SetHash()
-			// Store new block
-			blockKey := n.sm.BlockKey(block.Height)
-			blockStorage := n.sm.BlockStorage()
-			if err := blockStorage.Put(blockKey, block); err != nil {
-				log.Error("could not store block on database", err)
-				continue
-			}
-
-			transaction := &pb.Transaction{
-				BlockHeight: block.Height,
-				Type:        "COINBASE",
-				Timestamp:   time.Now().Unix(),
-				PubKey:      "badbeef",
-				Verify:      "badbeef",
-				Sender:      "COINBASE",
-				Receiver:    "NReceiver",
-				Amount:      100_000_000, // Coin has 8 decimals
-			}
-			transaction.SetHash()
-
-			// Store new transaction
-			transactionKey := n.sm.TransactionKey(transaction.BlockHeight, transaction.Hash)
-			transactionStorage := n.sm.TransactionStorage()
-			if err := transactionStorage.Put(transactionKey, transaction); err != nil {
-				log.Error("could not store transaction on database", err)
-				continue
-			}
-
-			newBlock := &pb.NewBlock{
-				Block: block,
-				Transactions: []*pb.Transaction{
-					transaction,
-				},
-			}
+			n.devPropagateData(height)
 			height++
-			log.Debugf(
-				"propagating a block %d, %s, %s",
-				block.Height,
-				block.Hash,
-				block.PreviousHash,
-			)
-			n.propagateNewBlock(newBlock)
-
-			transaction.BlockHeight = 0
-			transaction.Type = "spend"
-			transaction.Timestamp = time.Now().Unix()
-			transaction.Sender = "NSender"
-			transaction.Amount = 10_000_000_000
-			transaction.SetHash()
-			transactionKey = n.sm.TransactionKey(transaction.BlockHeight, transaction.Hash)
-			pendingTransactionStorage := n.sm.PendingTransactionStorage()
-			if err := pendingTransactionStorage.Put(transactionKey, transaction); err != nil {
-				log.Error("could not store transaction on database", err)
-				continue
-			}
-			newTransactions := &pb.NewTransactions{
-				Transactions: []*pb.Transaction{
-					transaction,
-				},
-			}
-
-			log.Debugf(
-				"propagating a transaction %d, %s, %s",
-				transaction.BlockHeight,
-				transaction.Hash,
-				transaction.Type,
-			)
-			n.propagateNewTransactions(newTransactions)
 
 		default:
 			continue
