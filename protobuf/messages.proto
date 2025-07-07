@@ -4,6 +4,12 @@ package nosogo;
 
 option go_package = "./protobuf";
 
+// Core Status
+
+message Status {
+  uint64 last_block = 1;
+}
+
 // Block chain
 message Block {
   uint64 height = 1;
@@ -23,6 +29,13 @@ message Transaction {
   uint64 amount = 6;
 }
 
+// Peers
+message PeerInfo {
+  string address = 1;
+  int32 port = 2;
+  string id = 3;
+  string mode = 4;
+}
 
 // Blocks Topic
 message NewBlock {
@@ -69,20 +82,14 @@ message NetworkMessages {
 }
 
 // DNS
-message DNSHost {
-  string address = 1;
-  int32 port = 2;
-  string id = 3;
-}
-
 message DNSHostResponse {
-  DNSHost dns = 1;
+  PeerInfo dns = 1;
 }
 
 message DNSSeedsResponse {
-  repeated DNSHost seeds = 1;
+  repeated PeerInfo seeds = 1;
 }
 
 message DNSNodesResponse {
-  repeated DNSHost nodes = 1;
+  repeated PeerInfo nodes = 1;
 }
