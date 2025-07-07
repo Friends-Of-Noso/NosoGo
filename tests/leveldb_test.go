@@ -7,7 +7,6 @@ import (
 
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 	"github.com/Friends-Of-Noso/NosoGo/store"
-	"github.com/Friends-Of-Noso/NosoGo/utils"
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
@@ -436,12 +435,34 @@ func getBlockZero() *pb.Block {
 // Reset the database
 func databaseReset() error {
 	// Remove test data, start fresh
-	if utils.FileExists(dbPath) {
-		err := utils.RemoveGlob(dbPath + "/*")
-		if err != nil {
+
+	// Delete Status
+	if err := statusStorage.Delete(statusKey); err != nil {
+		return err
+	}
+
+	// Delete blocks
+	blocks, err := blockStorage.ListKeys()
+	if err != nil {
+		return err
+	}
+	for _, key := range blocks {
+		if err := blockStorage.Delete(key); err != nil {
 			return err
 		}
 	}
+
+	// Delete transactions
+	transactions, err := transactionStorage.ListKeys()
+	if err != nil {
+		return err
+	}
+	for _, key := range transactions {
+		if err := transactionStorage.Delete(key); err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
 
