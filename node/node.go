@@ -3,6 +3,7 @@ package node
 import (
 	"context"
 	"crypto/rand"
+	"errors"
 	"fmt"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ import (
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/syndtr/goleveldb/leveldb"
 	"google.golang.org/protobuf/proto"
 
 	cfg "github.com/Friends-Of-Noso/NosoGo/config"
@@ -33,25 +35,30 @@ var (
 )
 
 type Node struct {
-	cmd           *cobra.Command
-	ctx           context.Context
-	cancel        context.CancelFunc
-	wg            *sync.WaitGroup
-	address       multiaddr.Multiaddr
-	port          int
-	mode          string
-	p2pHost       host.Host
-	pubSub        *pubsub.PubSub
-	topics        PubSubTopics
-	subscriptions PubSubSubscription
-	privateKey    crypto.PrivKey
-	publicKey     crypto.PubKey
-	sm            *store.StorageManager
-	peers         []peer.AddrInfo
-	dns           *dns.DNS
-	dnsAddress    string
-	dnsPort       int
-	seed          string // This needs to go away
+	cmd                *cobra.Command
+	ctx                context.Context
+	cancel             context.CancelFunc
+	wg                 *sync.WaitGroup
+	address            multiaddr.Multiaddr
+	port               int
+	mode               string
+	p2pHost            host.Host
+	pubSub             *pubsub.PubSub
+	topics             PubSubTopics
+	subscriptions      PubSubSubscription
+	privateKey         crypto.PrivKey
+	publicKey          crypto.PubKey
+	sm                 *store.StorageManager
+	peers              []peer.AddrInfo
+	dns                *dns.DNS
+	dnsAddress         string
+	dnsPort            int
+	statusStorage      *store.Storage[*pb.Status]
+	blockStorage       *store.Storage[*pb.Block]
+	transactionStorage *store.Storage[*pb.Transaction]
+	peerInfoStorage    *store.Storage[*pb.PeerInfo]
+	status             *pb.Status
+	seed               string // This needs to go away
 	// dht           *dht.IpfsDHT
 }
 
@@ -168,24 +175,29 @@ func NewNode(
 	}
 
 	return &Node{
-		ctx:           ctx,
-		cancel:        cancel,
-		wg:            wg,
-		cmd:           cmd,
-		address:       address,
-		port:          port,
-		mode:          mode,
-		dnsAddress:    dnsAddress,
-		dnsPort:       dnsPort,
-		p2pHost:       host,
-		pubSub:        ps,
-		topics:        make(PubSubTopics, 0),
-		subscriptions: make(PubSubSubscription, 0),
-		privateKey:    privateKey,
-		publicKey:     publicKey,
-		sm:            sm,
-		peers:         make(Peers, 0),
-		seed:          seed,
+		ctx:                ctx,
+		cancel:             cancel,
+		wg:                 wg,
+		cmd:                cmd,
+		address:            address,
+		port:               port,
+		mode:               mode,
+		dnsAddress:         dnsAddress,
+		dnsPort:            dnsPort,
+		p2pHost:            host,
+		pubSub:             ps,
+		topics:             make(PubSubTopics, 0),
+		subscriptions:      make(PubSubSubscription, 0),
+		privateKey:         privateKey,
+		publicKey:          publicKey,
+		sm:                 sm,
+		peers:              make(Peers, 0),
+		status:             &pb.Status{},
+		statusStorage:      sm.StatusStorage(),
+		blockStorage:       sm.BlockStorage(),
+		transactionStorage: sm.TransactionStorage(),
+		peerInfoStorage:    sm.PeerInfoStorage(),
+		seed:               seed,
 		// dht:           dht,
 	}, nil
 }
@@ -194,12 +206,10 @@ func (n *Node) Start() {
 	defer n.wg.Done()
 	log.Debugf("node.start() called with mode: %s", n.mode)
 
-	// logLevel, err := n.cmd.Flags().GetString("log-level")
-	// if err != nil {
-	// 	log.Error("error getting flag 'log-level'", err)
-	// 	n.Shutdown()
-	// }
-	// log.Debugf("log level: %s", logLevel)
+	if err := n.startUp(); err != nil {
+		log.Errorf("failed calling startUp", err)
+		n.Shutdown()
+	}
 
 	switch n.mode {
 	case cfg.NodeModeDNS:
@@ -243,6 +253,22 @@ func (n *Node) Shutdown() {
 	log.Info("exiting")
 }
 
+// Loads the status
+func (n *Node) loadStatus() error {
+	if err := n.statusStorage.Get(pb.StatusKey, n.status); err != nil {
+		return err
+	}
+	return nil
+}
+
+// Loads the status
+func (n *Node) saveStatus() error {
+	if err := n.statusStorage.Put(pb.StatusKey, n.status); err != nil {
+		return err
+	}
+	return nil
+}
+
 // Propagates a new block
 func (n *Node) propagateNewBlock(newblock *pb.NewBlock) error {
 	// Create network message
@@ -274,9 +300,133 @@ func (n *Node) propagateNewTransactions(newTransactions *pb.NewTransactions) err
 	// Serialize the message
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal block: %v", err)
+		return err
 	}
 
 	// Publish to the network
 	return n.topics[BLOCKS_SUB].Publish(n.ctx, data)
+}
+
+func (n *Node) startUp() error {
+	// Check if we have any blocks
+	blocksCount, err := n.blockStorage.Count()
+	if err != nil {
+		return err
+	}
+
+	// Check if we have any transactions
+	transactionsCount, err := n.transactionStorage.Count()
+	if err != nil {
+		return err
+	}
+
+	status := &pb.Status{}
+	err = n.statusStorage.Get(pb.StatusKey, status)
+	if errors.Is(err, leveldb.ErrNotFound) {
+
+		// We have blocks or transactions but status is missing
+		if blocksCount > 0 || transactionsCount > 0 {
+			// Attempt to rescan the database
+			if err := n.reScanBlockChain(); err != nil {
+				// Ok, data is well corrupted
+				return err
+			}
+		} else {
+			if err := n.initiateBlockChain(); err != nil {
+				return err
+			}
+		}
+	} else {
+		if status.LastBlock != blocksCount-1 {
+			// Attempt to rescan the database
+			if err := n.reScanBlockChain(); err != nil {
+				// Ok, data is well corrupted
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Initializes the block chain with block zero and sets status
+func (n *Node) initiateBlockChain() error {
+	blockZero := getBlockZero()
+
+	blockZeroKey := n.sm.BlockKey(blockZero.Height)
+	if err := n.blockStorage.Put(blockZeroKey, blockZero); err != nil {
+		return err
+	}
+	status := &pb.Status{
+		LastBlock: blockZero.Height,
+		LastHash:  blockZero.Hash,
+	}
+	if err := n.statusStorage.Put(pb.StatusKey, status); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Re-scans the database and tries to recover status
+func (n *Node) reScanBlockChain() error {
+	blocks, err := n.blockStorage.ListValues(func() *pb.Block {
+		return &pb.Block{}
+	})
+	if err != nil {
+		return err
+	}
+
+	// Check that all blocks are sequential
+	var (
+		height   uint64 = 0
+		previous        = getBlockZero()
+	)
+
+	for _, block := range blocks {
+		if block.Height != height {
+			return fmt.Errorf("mismatched block height, expected %d, got %d", height, block.Height)
+		}
+
+		if height == 0 && block.PreviousHash != previous.PreviousHash {
+			return fmt.Errorf("chain is broken: block %d does not have the the correct previous hash", block.Height)
+		}
+		if height != 0 && block.PreviousHash != previous.Hash {
+			return fmt.Errorf("chain is broken: block %d does not have the the correct previous hash", block.Height)
+		}
+
+		if err := n.loadStatus(); err != nil {
+			log.Error("reScanBlockChain.loadStatus", err)
+			n.Shutdown()
+		}
+
+		n.status.LastBlock = block.Height
+		n.status.LastHash = block.Hash
+
+		if err := n.saveStatus(); err != nil {
+			log.Error("reScanBlockChain.saveStatus", err)
+			n.Shutdown()
+		}
+
+		previous = block
+		height++
+	}
+
+	// Check for orphaned transactions
+	transactions, err := n.transactionStorage.ListValues(func() *pb.Transaction {
+		return &pb.Transaction{}
+	})
+	if err != nil {
+		return fmt.Errorf("could not retrieve transactions: %v", err)
+	}
+	for _, transaction := range transactions {
+		key := n.sm.BlockKey(transaction.BlockHeight)
+		ok, err := n.blockStorage.Has(key)
+		if err != nil {
+			return fmt.Errorf("error querying for block: %v", err)
+		}
+		if !ok {
+			return fmt.Errorf("found an orphan transaction: '%s'", transaction.Hash)
+		}
+	}
+	return nil
 }

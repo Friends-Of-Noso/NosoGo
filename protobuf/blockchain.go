@@ -1,5 +1,6 @@
 package protobuf
 
 const (
-	salt = "Noso"
+	salt      = "Noso"
+	StatusKey = "status-main"
 )

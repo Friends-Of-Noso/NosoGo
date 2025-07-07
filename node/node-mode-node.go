@@ -70,7 +70,17 @@ func (n *Node) runModeNode() {
 	ticker := time.NewTicker(time.Second * 5)
 	defer ticker.Stop()
 
-	var height uint64 = 0
+	if err := n.loadStatus(); err != nil {
+		log.Error("runModeNode.loadStatus", err)
+		n.Shutdown()
+	}
+
+	height := n.status.LastBlock + 1
+
+	if err := n.saveStatus(); err != nil {
+		log.Error("runModeNode.saveStatus", err)
+		n.Shutdown()
+	}
 
 	for {
 		select {

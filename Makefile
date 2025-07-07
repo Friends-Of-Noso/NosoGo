@@ -79,7 +79,11 @@ target/$(NOSOGOCLI_BINARY64):
 	CGO_ENABLED=0 GOARCH=amd64 go build $(BUILD_FLAGS) -o $@ cmd/nosogocli/main.go
 
 test:
-	@echo "====> Running go test"
-	@go test ./tests
+	@echo "====> Running tests"
+	@go test -v -run "." "github.com/Friends-Of-Noso/NosoGo/tests"
+
+benchmark:
+	@echo "====> Running benchmarks"
+	@go test -benchmem -run="^$$" -bench "." "github.com/Friends-Of-Noso/NosoGo/tests"
 
 .PHONY: all target release-all clean

@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
+
+	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 // Checks for privileges of the user running the application.
@@ -18,4 +21,16 @@ func checkPort(port int, flag string, defaultPort int) error {
 	}
 
 	return nil
+}
+
+// Generates block zero
+func getBlockZero() *pb.Block {
+	previous := &pb.Block{
+		Height:       0,
+		PreviousHash: "BZERO",
+		Timestamp:    time.Now().Unix(),
+		MerkleRoot:   "MZERO",
+	}
+	previous.SetHash()
+	return previous
 }

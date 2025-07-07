@@ -9,16 +9,27 @@ import (
 
 // This file contains stuff that only makes sense during heavy development
 func (n *Node) devPropagateData(height uint64) {
-	// TODO This needs to go away on the real thing.
+	// TODO: This needs to go away on the real thing.
 	if n.seed != "" {
 		return
 	}
+
+	if err := n.loadStatus(); err != nil {
+		log.Error("devPropagateData.loadStatus", err)
+		n.Shutdown()
+	}
 	block := &pb.Block{
 		Height:       height,
-		PreviousHash: "BPreviousHash",
+		PreviousHash: n.status.LastHash,
 		Timestamp:    time.Now().Unix(),
 	}
 	block.SetHash()
+	n.status.LastBlock = block.Height
+	n.status.LastHash = block.Hash
+	if err := n.saveStatus(); err != nil {
+		log.Error("devPropagateData.saveStatus", err)
+		n.Shutdown()
+	}
 	// Store new block
 	blockKey := n.sm.BlockKey(block.Height)
 	blockStorage := n.sm.BlockStorage()

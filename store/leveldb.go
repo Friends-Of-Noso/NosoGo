@@ -77,8 +77,8 @@ func (s *Storage[T]) Has(key string) (bool, error) {
 	return s.db.Has([]byte(fullKey), nil)
 }
 
-// List returns all keys with the storage prefix
-func (s *Storage[T]) List() ([]string, error) {
+// ListKeys returns all keys with the storage prefix
+func (s *Storage[T]) ListKeys() ([]string, error) {
 	var keys []string
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
@@ -95,9 +95,9 @@ func (s *Storage[T]) List() ([]string, error) {
 	return keys, iter.Error()
 }
 
-// ListWithValues returns all key-value pairs with the storage prefix
-func (s *Storage[T]) ListWithValues(newInstance func() T) (map[string]T, error) {
-	results := make(map[string]T)
+// ListValues returns all key-value pairs with the storage prefix
+func (s *Storage[T]) ListValues(newInstance func() T) ([]T, error) {
+	var results []T
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
 	defer iter.Release()
@@ -113,7 +113,7 @@ func (s *Storage[T]) ListWithValues(newInstance func() T) (map[string]T, error) 
 				return nil, fmt.Errorf("failed to unmarshal value for key %s: %w", cleanKey, err)
 			}
 
-			results[cleanKey] = value
+			results = append(results, value)
 		}
 	}
 
@@ -183,8 +183,8 @@ func (sm *StorageManager) GetDB() *leveldb.DB {
 }
 
 // Helper functions for creating specific storage instances
-func (sm *StorageManager) StatusStorage() *Storage[*pb.Block] {
-	return newStorage[*pb.Block](sm.db, StatusPrefix)
+func (sm *StorageManager) StatusStorage() *Storage[*pb.Status] {
+	return newStorage[*pb.Status](sm.db, StatusPrefix)
 }
 
 func (sm *StorageManager) BlockStorage() *Storage[*pb.Block] {
@@ -244,8 +244,8 @@ func (s *Storage[T]) GetRange(startKey, endKey string, newInstance func() T) (ma
 }
 
 // Count returns the number of items with the storage prefix
-func (s *Storage[T]) Count() (int, error) {
-	count := 0
+func (s *Storage[T]) Count() (uint64, error) {
+	var count uint64 = 0
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
 	defer iter.Release()

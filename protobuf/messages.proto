@@ -8,6 +8,7 @@ option go_package = "./protobuf";
 
 message Status {
   uint64 last_block = 1;
+  string last_hash = 2;
 }
 
 // Block chain
