@@ -2,6 +2,16 @@
 
 Notable changes up to the last release.
 
+## [0.0.5](https://github.com/Friends-Of-Noso/NosoGo/compare/v0.0.4..v0.0.5) - 2025-07-07
+
+### ⛰️  Features
+
+- Startup checks are done - ([cd695b8](https://github.com/Friends-Of-Noso/NosoGo/commit/cd695b84290e7cc34ec06bf90a6766c96fc9c609))
+
+## Contributors
+
+* [@gcarreno](https://github.com/gcarreno)
+
 ## [0.0.4](https://github.com/Friends-Of-Noso/NosoGo/compare/v0.0.3..v0.0.4) - 2025-07-07
 
 ### ⛰️  Features
