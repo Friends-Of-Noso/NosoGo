@@ -448,14 +448,14 @@ func databaseReset() error {
 // Reset the database with testing.T
 func databaseResetT(t *testing.T) {
 	if err := databaseReset(); err != nil {
-		t.Fatalf("could not delete folder '%s'", dbPath)
+		t.Fatalf("could not delete folder '%s': %v", dbPath, err)
 	}
 }
 
 // Reset the database with `testing.B`
 func databaseResetB(b *testing.B) {
 	if err := databaseReset(); err != nil {
-		b.Fatalf("could not delete folder '%s'", dbPath)
+		b.Fatalf("could not delete folder '%s': %v", dbPath, err)
 	}
 }
 
