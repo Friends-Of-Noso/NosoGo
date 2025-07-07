@@ -2,7 +2,20 @@
 
 Notable changes up to the last release.
 
-## [unreleased]
+## [0.0.4](https://github.com/Friends-Of-Noso/NosoGo/compare/v0.0.3..v0.0.4) - 2025-07-07
+
+### ⛰️  Features
+
+- NewBlock, NewTransactions dumped into db - ([9d77245](https://github.com/Friends-Of-Noso/NosoGo/commit/9d77245593ab0c2d87f36c17ab158c31ae5393ee))
+- Add generics version to store on `LevelDB` - ([786f209](https://github.com/Friends-Of-Noso/NosoGo/commit/786f209e6b58f20e9d4fff2be7c88b582f74ac6e))
+
+### 🚜 Refactor
+
+- Improved `LevelDB` generics store+tests - ([fde453a](https://github.com/Friends-Of-Noso/NosoGo/commit/fde453a583098328538c780e682be976177885eb))
+
+### 🎨 Styling
+
+- Moving dev only code to it's own file - ([09bb4ba](https://github.com/Friends-Of-Noso/NosoGo/commit/09bb4ba88002bb382f9c96e85b96edeab2f8cdef))
 
 ### ⚙️ Miscellaneous Tasks
 
