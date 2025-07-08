@@ -25,12 +25,13 @@ func checkPort(port int, flag string, defaultPort int) error {
 
 // Generates block zero
 func getBlockZero() *pb.Block {
-	previous := &pb.Block{
+	block := &pb.Block{
+		Hash:         "COINBASE",
 		Height:       0,
 		PreviousHash: "BZERO",
-		Timestamp:    time.Now().Unix(),
+		Timestamp:    time.Now().Unix(), // TODO: This should be dated to genesis
 		MerkleRoot:   "MZERO",
 	}
-	previous.SetHash()
-	return previous
+	// block.SetHash()
+	return block
 }

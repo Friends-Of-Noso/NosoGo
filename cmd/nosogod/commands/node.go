@@ -113,6 +113,8 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		// Create a channel to receive OS signals.
 		sigChan := make(chan os.Signal, 1)
+		// Manual quit channel
+		quit := make(chan struct{})
 
 		// Notify on all relevant Windows and Unix signals.
 		signal.Notify(sigChan,
@@ -131,17 +133,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		)
 
 		var wg sync.WaitGroup
-
-		// if seed != "" {
-		// 	log.Debugf("Got seed: %s", seed)
-		// 	if strings.Contains(seed, ":") {
-		// 		bits := strings.Split(seed, ":")
-		// 		seed = fmt.Sprintf("/ip4/%s/tcp/%s", bits[0], bits[1])
-		// 	} else {
-		// 		seed = fmt.Sprintf("/ip4/%s/tcp/%d", seed, cfg.DefaultNodePort)
-		// 	}
-		// 	log.Debugf("Seed multiaddr: %s", seed)
-		// }
 
 		nodeAddressConfig := getFlagString(cmd, cNodeAddressFlag)
 		log.Debugf("nodeAddress: %s", nodeAddressConfig)
@@ -171,7 +162,7 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		node, err := node.NewNode(
 			ctx,
-			cancel,
+			&quit,
 			&wg,
 			cmd,
 			nodeAddress,
@@ -191,16 +182,25 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		wg.Add(1)
 		go node.Start()
-		// Block here until we receive a termination signal
-		sig := <-sigChan
-		// Print a new line after the "^C" or "^\"
-		if sig == syscall.SIGINT || sig == syscall.SIGQUIT || sig == syscall.SIGKILL {
-			fmt.Println()
-		}
-		log.Infof("received signal '%s'", sig)
 
-		// Node shutdown cancels the context to signal goroutines to stop
-		node.Shutdown()
+		// Block here until we receive a termination signal
+		select {
+		case sig := <-sigChan:
+			// Print a new line after the "^C" or "^\"
+			if sig == syscall.SIGINT || sig == syscall.SIGQUIT || sig == syscall.SIGKILL {
+				fmt.Println()
+			}
+			log.Debugf("received signal '%s'", sig)
+			// Node shutdown cleans up it's dependencies
+			node.Shutdown()
+		case <-quit:
+			log.Debugf("received internal shutdown")
+		}
+
+		// cancel
+		cancel()
+
+		wg.Wait()
 
 	} else {
 		log.Fatalf("cannot find config file '%s', please run the 'init' command first", viper.ConfigFileUsed())

@@ -1,8 +1,6 @@
 package node
 
 import (
-	"time"
-
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 
@@ -44,6 +42,7 @@ func (n *Node) runModeNode() {
 	// if err := n.dht.Bootstrap(n.ctx); err != nil {
 	// 	log.Error("failed to bootstrap DHT", err)
 	// 	n.Shutdown()
+	// 	return
 	// }
 
 	// Join blocks topic
@@ -51,6 +50,7 @@ func (n *Node) runModeNode() {
 	if err != nil {
 		log.Error("failed to join blocks topic", err)
 		n.Shutdown()
+		return
 	}
 	n.topics[BLOCKS_SUB] = blockTopic
 
@@ -59,6 +59,7 @@ func (n *Node) runModeNode() {
 	if err != nil {
 		log.Error("failed to subscribe to blocks topic", err)
 		n.Shutdown()
+		return
 	}
 
 	// Handle incoming blocks
@@ -67,33 +68,33 @@ func (n *Node) runModeNode() {
 
 	n.subscriptions[BLOCKS_SUB] = blockSub
 
-	ticker := time.NewTicker(time.Second * 5)
-	defer ticker.Stop()
+	// TODO: This must go away in production
+	// if err := n.loadStatus(); err != nil {
+	// 	log.Error("runModeNode.loadStatus", err)
+	// 	n.Shutdown()
+	// 	return
+	// }
 
-	if err := n.loadStatus(); err != nil {
-		log.Error("runModeNode.loadStatus", err)
-		n.Shutdown()
-	}
+	// height := n.status.LastBlock + 1
 
-	height := n.status.LastBlock + 1
+	// if err := n.saveStatus(); err != nil {
+	// 	log.Error("runModeNode.saveStatus", err)
+	// 	n.Shutdown()
+	// 	return
+	// }
 
-	if err := n.saveStatus(); err != nil {
-		log.Error("runModeNode.saveStatus", err)
-		n.Shutdown()
-	}
+	// ticker := time.NewTicker(time.Second * 5)
+	// defer ticker.Stop()
+	// <--- to here
 
 	for {
 		select {
 		case <-n.ctx.Done():
 			log.Debug("node.start() exiting")
 			return
-		case <-ticker.C:
-			// if config.LogLevel != "debug" {
-			// 	continue
-			// }
-			n.devPropagateData(height)
-			height++
-
+		// case <-ticker.C:
+		// 	n.devPropagateData(height)
+		// 	height++
 		default:
 			continue
 		}

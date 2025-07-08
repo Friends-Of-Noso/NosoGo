@@ -35,9 +35,10 @@ var (
 )
 
 type Node struct {
-	cmd                *cobra.Command
-	ctx                context.Context
-	cancel             context.CancelFunc
+	cmd *cobra.Command
+	ctx context.Context
+	// cancel             context.CancelFunc
+	quit               *chan struct{}
 	wg                 *sync.WaitGroup
 	address            multiaddr.Multiaddr
 	port               int
@@ -64,7 +65,8 @@ type Node struct {
 
 func NewNode(
 	ctx context.Context,
-	cancel context.CancelFunc,
+	// cancel context.CancelFunc,
+	quit *chan struct{},
 	wg *sync.WaitGroup,
 	cmd *cobra.Command,
 	address multiaddr.Multiaddr,
@@ -175,8 +177,9 @@ func NewNode(
 	}
 
 	return &Node{
-		ctx:                ctx,
-		cancel:             cancel,
+		ctx: ctx,
+		// cancel:             cancel,
+		quit:               quit,
 		wg:                 wg,
 		cmd:                cmd,
 		address:            address,
@@ -204,11 +207,12 @@ func NewNode(
 
 func (n *Node) Start() {
 	defer n.wg.Done()
-	log.Debugf("node.start() called with mode: %s", n.mode)
+	log.Infof("node starting in mode: %s", n.mode)
 
 	if err := n.startUp(); err != nil {
 		log.Errorf("failed calling startUp", err)
 		n.Shutdown()
+		return
 	}
 
 	switch n.mode {
@@ -228,7 +232,8 @@ func (n *Node) Shutdown() {
 	log.Info("node shutting down...")
 
 	// Call the Context cancel function
-	n.cancel()
+	// n.cancel()
+	close(*n.quit)
 
 	// See if there's custom  cleanup for each mode
 	switch n.mode {
@@ -243,14 +248,14 @@ func (n *Node) Shutdown() {
 	}
 
 	// Wait for all goroutines to finish
-	log.Info("waiting for threads to finish...")
-	n.wg.Wait()
+	// log.Info("waiting for threads to finish...")
+	// n.wg.Wait()
 
 	// Close the database
 	log.Info("closing database...")
 	n.sm.Close()
 
-	log.Info("exiting")
+	log.Info("exiting node")
 }
 
 // Loads the status
@@ -308,6 +313,11 @@ func (n *Node) propagateNewTransactions(newTransactions *pb.NewTransactions) err
 }
 
 func (n *Node) startUp() error {
+
+	log.Info("checking blockchain")
+
+	// return fmt.Errorf("test exit: %d", 1)
+
 	// Check if we have any blocks
 	blocksCount, err := n.blockStorage.Count()
 	if err != nil {
@@ -320,12 +330,12 @@ func (n *Node) startUp() error {
 		return err
 	}
 
-	status := &pb.Status{}
-	err = n.statusStorage.Get(pb.StatusKey, status)
+	err = n.loadStatus()
 	if errors.Is(err, leveldb.ErrNotFound) {
-
+		log.Debug("loadStatus -> ErrNotFound")
 		// We have blocks or transactions but status is missing
 		if blocksCount > 0 || transactionsCount > 0 {
+			log.Info("blockchain seems to be out of sync: attempting a re-scan")
 			// Attempt to rescan the database
 			if err := n.reScanBlockChain(); err != nil {
 				// Ok, data is well corrupted
@@ -337,7 +347,9 @@ func (n *Node) startUp() error {
 			}
 		}
 	} else {
-		if status.LastBlock != blocksCount-1 {
+		log.Debugf("loadStatus -> status: %d, '%s'", n.status.LastBlock, n.status.LastHash)
+		if n.status.LastBlock != blocksCount-1 {
+			log.Info("blockchain seems to be out of sync: attempting a re-scan")
 			// Attempt to rescan the database
 			if err := n.reScanBlockChain(); err != nil {
 				// Ok, data is well corrupted
@@ -350,6 +362,7 @@ func (n *Node) startUp() error {
 
 // Initializes the block chain with block zero and sets status
 func (n *Node) initiateBlockChain() error {
+	log.Info("no blockchain found, creating it")
 	blockZero := getBlockZero()
 
 	blockZeroKey := n.sm.BlockKey(blockZero.Height)
@@ -369,6 +382,7 @@ func (n *Node) initiateBlockChain() error {
 
 // Re-scans the database and tries to recover status
 func (n *Node) reScanBlockChain() error {
+	log.Info("re-scanning the blockchain")
 	blocks, err := n.blockStorage.ListValues(func() *pb.Block {
 		return &pb.Block{}
 	})
@@ -394,10 +408,12 @@ func (n *Node) reScanBlockChain() error {
 			return fmt.Errorf("chain is broken: block %d does not have the the correct previous hash", block.Height)
 		}
 
-		if err := n.loadStatus(); err != nil {
-			log.Error("reScanBlockChain.loadStatus", err)
-			n.Shutdown()
-		}
+		// ????????????????????????
+		// if err := n.loadStatus(); err != nil {
+		// 	log.Error("reScanBlockChain.loadStatus", err)
+		// 	n.Shutdown()
+		// 	return err
+		// }
 
 		n.status.LastBlock = block.Height
 		n.status.LastHash = block.Hash
@@ -405,6 +421,7 @@ func (n *Node) reScanBlockChain() error {
 		if err := n.saveStatus(); err != nil {
 			log.Error("reScanBlockChain.saveStatus", err)
 			n.Shutdown()
+			return err
 		}
 
 		previous = block

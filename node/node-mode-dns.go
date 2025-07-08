@@ -41,6 +41,7 @@ func (n *Node) runModeDNS() {
 	if err != nil {
 		log.Error("error checking port", err)
 		n.Shutdown()
+		return
 	}
 
 	nodeID := fmt.Sprintf("%s", n.p2pHost.ID())
@@ -48,6 +49,7 @@ func (n *Node) runModeDNS() {
 	if err != nil {
 		log.Error("could not create DNS server", err)
 		n.Shutdown()
+		return
 	}
 
 	n.dns = dnsServer
