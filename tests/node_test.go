@@ -14,6 +14,7 @@ func TestBlockchainFirstRun(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -33,6 +34,7 @@ func TestBlockchainWithCorrectData(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -54,6 +56,7 @@ func TestBlockchainWithIncorrectData(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 

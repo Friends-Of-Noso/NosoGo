@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 	"github.com/Friends-Of-Noso/NosoGo/store"
 )
@@ -28,6 +30,7 @@ func TestBlockPutGet(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -40,27 +43,25 @@ func TestBlockPutGet(t *testing.T) {
 	}
 
 	key := sm.BlockKey(block.Height)
-	if err := blockStorage.Put(key, block); err != nil {
-		t.Fatalf("failed to store block: %v", err)
+	err = blockStorage.Put(key, block)
+	if err != nil {
+		closeStorageManager()
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
 	// Retrieve the block
 	retrievedBlock := &pb.Block{}
-	if err := blockStorage.Get(key, retrievedBlock); err != nil {
-		t.Fatalf("failed to retrieve block: %v", err)
+	err = blockStorage.Get(key, retrievedBlock)
+	if err != nil {
+		closeStorageManager()
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
-	if block.Height != retrievedBlock.Height {
-		t.Fatalf("mismatch height: wanted %d, got %d", block.Height, retrievedBlock.Height)
-	}
+	assert.Equal(t, block.Height, retrievedBlock.Height)
 
-	if block.Hash != retrievedBlock.Hash {
-		t.Fatalf("mismatch hash: wanted '%s', got '%s'", block.Hash, retrievedBlock.Hash)
-	}
+	assert.Equal(t, block.Hash, retrievedBlock.Hash)
 
-	if block.PreviousHash != retrievedBlock.PreviousHash {
-		t.Fatalf("mismatch previous hash: wanted '%s,' got '%s'", block.PreviousHash, retrievedBlock.PreviousHash)
-	}
+	assert.Equal(t, block.PreviousHash, retrievedBlock.PreviousHash)
 
 	databaseResetT(t)
 	closeStorageManager()
@@ -72,6 +73,7 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -81,12 +83,15 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 
 	blocks, err := blockStorage.ListKeys()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not retrieve list of blocks: %v", err)
 	}
 	var height uint64 = 0
 	for index, value := range blocks {
 		key := sm.BlockKey(uint64(index))
 		if key != value {
+			databaseResetT(t)
+			closeStorageManager()
 			t.Fatalf("list out of order: wanted '%s', got '%s'", key, value)
 		}
 		height++
@@ -98,10 +103,11 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 
 // Test retrieving a list of blocks with incorrect data
 func TestBlocksStorageListIncorrect(t *testing.T) {
-	t.SkipNow()
+	// t.SkipNow()
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -111,13 +117,14 @@ func TestBlocksStorageListIncorrect(t *testing.T) {
 
 	blocks, err := blockStorage.ListKeys()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not retrieve list of blocks: %v", err)
 	}
 	var height uint64 = 0
 	for index, value := range blocks {
 		key := sm.BlockKey(uint64(index))
 		if key != value {
-			return
+			break
 		}
 		height++
 	}
@@ -132,6 +139,7 @@ func TestBlocksStorageListWithValuesCorrect(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -143,14 +151,14 @@ func TestBlocksStorageListWithValuesCorrect(t *testing.T) {
 		return &pb.Block{}
 	})
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not retrieve list of blocks: %v", err)
 	}
 	var height uint64 = 0
 	for _, block := range blocks {
 		if height != block.Height {
-			// databaseResetT(t)
-			// closeStorageManager()
 			t.Errorf("list out of order: wanted '%d', got '%d'", height, block.Height)
+			break
 		}
 		height++
 	}
@@ -165,6 +173,7 @@ func TestBlocksStorageListWithValuesIncorrect(t *testing.T) {
 
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -176,14 +185,13 @@ func TestBlocksStorageListWithValuesIncorrect(t *testing.T) {
 		return &pb.Block{}
 	})
 	if err != nil {
+		closeStorageManager()
 		t.Fatalf("could not retrieve list of blocks: %v", err)
 	}
 	var height uint64 = 0
 	for _, block := range blocks {
 		if height != block.Height {
-			databaseResetT(t)
-			closeStorageManager()
-			return
+			break
 		}
 		height++
 	}
@@ -268,6 +276,7 @@ func databaseReset() error {
 // Reset the database with testing.T
 func databaseResetT(t *testing.T) {
 	if err := databaseReset(); err != nil {
+		closeStorageManager()
 		t.Fatalf("could not delete data: %v", err)
 	}
 }
@@ -275,6 +284,7 @@ func databaseResetT(t *testing.T) {
 // Reset the database with `testing.B`
 func databaseResetB(b *testing.B) {
 	if err := databaseReset(); err != nil {
+		closeStorageManager()
 		b.Fatalf("could not delete data: %v", err)
 	}
 }
@@ -288,6 +298,7 @@ func createCorrectData(t *testing.T) {
 	}
 
 	if err := statusStorage.Put(statusKey, status); err != nil {
+		closeStorageManager()
 		t.Fatalf("could not store status: %v", err)
 	}
 
@@ -312,6 +323,7 @@ func createCorrectData(t *testing.T) {
 
 		key := sm.BlockKey(block.Height)
 		if err := blockStorage.Put(key, block); err != nil {
+			closeStorageManager()
 			t.Fatalf("could not put block: %v", err)
 		}
 
@@ -324,6 +336,7 @@ func createCorrectData(t *testing.T) {
 			transaction.SetHash()
 			key := sm.TransactionKey(block.Height, transaction.Hash)
 			if err := transactionStorage.Put(key, transaction); err != nil {
+				closeStorageManager()
 				t.Fatalf("could not store transaction: %v", err)
 			}
 		}
@@ -339,6 +352,7 @@ func createIncorrectData(t *testing.T) {
 	}
 
 	if err := statusStorage.Put(statusKey, status); err != nil {
+		closeStorageManager()
 		t.Fatalf("could not store status: %v", err)
 	}
 
@@ -362,6 +376,7 @@ func createIncorrectData(t *testing.T) {
 
 		key := sm.BlockKey(block.Height)
 		if err := blockStorage.Put(key, block); err != nil {
+			closeStorageManager()
 			t.Fatalf("could not put block: %v", err)
 		}
 	}
@@ -373,6 +388,7 @@ func createIncorrectData(t *testing.T) {
 	block.SetHash()
 	key := sm.BlockKey(block.Height)
 	if err := blockStorage.Put(key, block); err != nil {
+		closeStorageManager()
 		t.Fatalf("could not put block: %v", err)
 	}
 
@@ -385,6 +401,7 @@ func createIncorrectData(t *testing.T) {
 		transaction.SetHash()
 		key := sm.TransactionKey(block.Height, transaction.Hash)
 		if err := transactionStorage.Put(key, transaction); err != nil {
+			closeStorageManager()
 			t.Fatalf("could not store transaction: %v", err)
 		}
 	}
@@ -395,6 +412,7 @@ func createIncorrectData(t *testing.T) {
 func createBlocks(b *testing.B, count uint64) {
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		b.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -419,6 +437,7 @@ func createBlocks(b *testing.B, count uint64) {
 
 		key := sm.BlockKey(block.Height)
 		if err := blockStorage.Put(key, block); err != nil {
+			closeStorageManager()
 			b.Fatalf("failed to store block: %v", err)
 		}
 	}
@@ -429,6 +448,7 @@ func createBlocks(b *testing.B, count uint64) {
 func readBlocks(b *testing.B, count uint64) {
 	err := initializeStorage()
 	if err != nil {
+		closeStorageManager()
 		b.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
@@ -436,6 +456,7 @@ func readBlocks(b *testing.B, count uint64) {
 	for i := range count {
 		key := sm.BlockKey(i)
 		if err := blockStorage.Get(key, block); err != nil {
+			closeStorageManager()
 			b.Fatalf("Failed to retrieve block: %v", err)
 		}
 	}

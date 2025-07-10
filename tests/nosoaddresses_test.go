@@ -3,6 +3,8 @@ package tests
 import (
 	"testing"
 
+	"gotest.tools/v3/assert"
+
 	"github.com/Friends-Of-Noso/NosoGo/legacy"
 )
 
@@ -14,14 +16,10 @@ const (
 
 func TestGetAddressFromPublicKeyN(t *testing.T) {
 	address := legacy.GetAddressFromPublicKey(pubKey, 0)
-	if address != addressN {
-		t.Errorf("Error: Expected %s Got %s", addressN, address)
-	}
+	assert.Equal(t, addressN, address)
 }
 
 func TestGetAddressFromPublicKeyM(t *testing.T) {
 	address := legacy.GetAddressFromPublicKey(pubKey, 1)
-	if address != addressM {
-		t.Errorf("Error: Expected %s Got %s", addressM, address)
-	}
+	assert.Equal(t, addressM, address)
 }

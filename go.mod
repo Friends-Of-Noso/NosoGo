@@ -15,6 +15,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/syndtr/goleveldb v1.0.0
 	google.golang.org/protobuf v1.36.6
+	gotest.tools/v3 v3.5.2
 )
 
 require (
@@ -30,6 +31,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
+	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gopacket v1.1.19 // indirect
 	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
 	github.com/google/uuid v1.6.0 // indirect
