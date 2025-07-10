@@ -36,7 +36,7 @@ nosogocli:
 	@go build $(BUILD_FLAGS) -o bin/nosogocli cmd/nosogocli/main.go
 
 install:
-	@echo "Installing nossogod to $(GOPATH)/bin"
+	@echo "Installing nosogod to $(GOPATH)/bin"
 	@go install ./bin/nosogod
 	@go install ./bin/nosogocli
 

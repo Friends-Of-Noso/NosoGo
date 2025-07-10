@@ -2,7 +2,6 @@ package dns
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"sync"
 
@@ -96,12 +95,8 @@ func (dns *DNS) Start() {
 	defer dns.wg.Done()
 
 	log.Infof("dns server: Listening on %s", dns.dnsAddress)
-	if err := dns.server.ListenAndServe(); err != nil {
-		if errors.Is(err, http.ErrServerClosed) {
-			log.Debug("dns server closed")
-		} else {
-			log.Error("dns server crashed", err)
-		}
+	if err := dns.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Debug("dns server crashed")
 	}
 }
 

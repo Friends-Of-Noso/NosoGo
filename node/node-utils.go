@@ -4,9 +4,6 @@ import (
 	"fmt"
 	"os"
 	"runtime"
-	"time"
-
-	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 // Checks for privileges of the user running the application.
@@ -21,17 +18,4 @@ func checkPort(port int, flag string, defaultPort int) error {
 	}
 
 	return nil
-}
-
-// Generates block zero
-func getBlockZero() *pb.Block {
-	block := &pb.Block{
-		Hash:         "COINBASE",
-		Height:       0,
-		PreviousHash: "BZERO",
-		Timestamp:    time.Now().Unix(), // TODO: This should be dated to genesis
-		MerkleRoot:   "MZERO",
-	}
-	// block.SetHash()
-	return block
 }

@@ -29,7 +29,7 @@ func (n *Node) handleBlocksTopic(sub *pubsub.Subscription) {
 			}
 
 			// Unmarshal the message
-			networkMsg := &pb.BlocksSubscriptionMessages{}
+			networkMsg := &pb.BlocksSubscriptionMessage{}
 			if err := proto.Unmarshal(msg.Data, networkMsg); err != nil {
 				log.Error("error unmarshaling blocks sub message", err)
 				continue
@@ -37,9 +37,9 @@ func (n *Node) handleBlocksTopic(sub *pubsub.Subscription) {
 
 			// Handle new payload
 			switch payload := networkMsg.Payload.(type) {
-			case *pb.BlocksSubscriptionMessages_NewBlock:
+			case *pb.BlocksSubscriptionMessage_NewBlock:
 				n.handleNewBlock(payload.NewBlock)
-			case *pb.BlocksSubscriptionMessages_NewTransactions:
+			case *pb.BlocksSubscriptionMessage_NewTransactions:
 				n.handleNewTransactions(payload.NewTransactions)
 			default:
 				log.Warn("sent a message we don't recognize from the blocks subscription")
@@ -49,7 +49,7 @@ func (n *Node) handleBlocksTopic(sub *pubsub.Subscription) {
 	}
 }
 
-func (n *Node) handleNewBlock(newBlock *pb.NewBlock) {
+func (n *Node) handleNewBlock(newBlock *pb.BlocksSubscriptionNewBlock) {
 	log.Infof("got new block(%d): %s, %s", newBlock.Block.Height, newBlock.Block.Hash, newBlock.Block.PreviousHash)
 	blockKey := n.sm.BlockKey(newBlock.Block.Height)
 	blockStorage := n.sm.BlockStorage()
@@ -83,7 +83,7 @@ func (n *Node) handleNewBlock(newBlock *pb.NewBlock) {
 	}
 }
 
-func (n *Node) handleNewTransactions(newTransactions *pb.NewTransactions) {
+func (n *Node) handleNewTransactions(newTransactions *pb.BlocksSubscriptionNewTransactions) {
 	log.Infof("got %d new transactions", len(newTransactions.Transactions))
 	for index, transaction := range newTransactions.Transactions {
 		log.Infof(

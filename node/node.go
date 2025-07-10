@@ -275,10 +275,10 @@ func (n *Node) saveStatus() error {
 }
 
 // Propagates a new block
-func (n *Node) propagateNewBlock(newblock *pb.NewBlock) error {
+func (n *Node) propagateNewBlock(newblock *pb.BlocksSubscriptionNewBlock) error {
 	// Create network message
-	msg := &pb.BlocksSubscriptionMessages{
-		Payload: &pb.BlocksSubscriptionMessages_NewBlock{
+	msg := &pb.BlocksSubscriptionMessage{
+		Payload: &pb.BlocksSubscriptionMessage_NewBlock{
 			NewBlock: newblock,
 		},
 	}
@@ -294,10 +294,10 @@ func (n *Node) propagateNewBlock(newblock *pb.NewBlock) error {
 }
 
 // Propagates a new block
-func (n *Node) propagateNewTransactions(newTransactions *pb.NewTransactions) error {
+func (n *Node) propagateNewTransactions(newTransactions *pb.BlocksSubscriptionNewTransactions) error {
 	// Create network message
-	msg := &pb.BlocksSubscriptionMessages{
-		Payload: &pb.BlocksSubscriptionMessages_NewTransactions{
+	msg := &pb.BlocksSubscriptionMessage{
+		Payload: &pb.BlocksSubscriptionMessage_NewTransactions{
 			NewTransactions: newTransactions,
 		},
 	}
@@ -363,7 +363,7 @@ func (n *Node) startUp() error {
 // Initializes the block chain with block zero and sets status
 func (n *Node) initiateBlockChain() error {
 	log.Info("no blockchain found, creating it")
-	blockZero := getBlockZero()
+	blockZero := pb.NewBlockZero()
 
 	blockZeroKey := n.sm.BlockKey(blockZero.Height)
 	if err := n.blockStorage.Put(blockZeroKey, blockZero); err != nil {
@@ -393,7 +393,7 @@ func (n *Node) reScanBlockChain() error {
 	// Check that all blocks are sequential
 	var (
 		height   uint64 = 0
-		previous        = getBlockZero()
+		previous        = pb.NewBlockZero()
 	)
 
 	for _, block := range blocks {

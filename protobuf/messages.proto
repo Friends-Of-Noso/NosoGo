@@ -40,43 +40,43 @@ message PeerInfo {
   string mode = 4;
 }
 
-// Blocks Topic
-message NewBlock {
+// Blocks Subscription
+message BlocksSubscriptionNewBlock {
   Block block = 1;
   repeated Transaction transactions = 2;
 }
 
-message NewTransactions {
+message BlocksSubscriptionNewTransactions {
   repeated Transaction transactions = 1;
 }
 
-message BlocksSubscriptionMessages {
+message BlocksSubscriptionMessage {
   oneof payload {
-    NewBlock new_block = 1;
-    NewTransactions new_transactions = 2;
+    BlocksSubscriptionNewBlock new_block = 1;
+    BlocksSubscriptionNewTransactions new_transactions = 2;
   }
 }
 
 // Network messages
-message Handshake {
+message NetworkMessageHandshake {
   string version = 1;
   string mode = 2;
 }
 
-message GetBlocks {
+message NetworkMessageGetBlocks {
   int64 from_height = 1;
   int64 to_height = 2;
 }
 
-message GetBlocksResponse {
+message NetworkMessageGetBlocksResponse {
   repeated Block blocks = 1;
 }
 
-message NetworkMessages {
+message NetworkMessage {
   oneof payload {
-    Handshake handshake = 1;
-    GetBlocks get_blocks = 2;
-    GetBlocksResponse get_blocks_response = 3;
+    NetworkMessageHandshake handshake = 1;
+    NetworkMessageGetBlocks get_blocks = 2;
+    NetworkMessageGetBlocksResponse get_blocks_response = 3;
   }
 }
 

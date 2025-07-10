@@ -1,17 +1,15 @@
 package tests
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 	"github.com/Friends-Of-Noso/NosoGo/store"
-	"github.com/syndtr/goleveldb/leveldb"
 )
 
 const (
-	dbPath    = "./test_data"
+	dbPath    = "test_data"
 	statusKey = "status-main"
 )
 
@@ -28,12 +26,12 @@ var (
 func TestBlockPutGet(t *testing.T) {
 	// t.SkipNow()
 
-	databaseResetT(t)
-
 	err := initializeStorage()
 	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetT(t)
 
 	block := &pb.Block{
 		Height:       1,
@@ -72,12 +70,12 @@ func TestBlockPutGet(t *testing.T) {
 func TestBlocksStorageListCorrect(t *testing.T) {
 	// t.SkipNow()
 
-	databaseResetT(t)
-
 	err := initializeStorage()
 	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetT(t)
 
 	createCorrectData(t)
 
@@ -102,12 +100,12 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 func TestBlocksStorageListIncorrect(t *testing.T) {
 	// t.SkipNow()
 
-	databaseResetT(t)
-
 	err := initializeStorage()
 	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetT(t)
 
 	createIncorrectData(t)
 
@@ -132,12 +130,12 @@ func TestBlocksStorageListIncorrect(t *testing.T) {
 func TestBlocksStorageListWithValuesCorrect(t *testing.T) {
 	// t.SkipNow()
 
-	databaseResetT(t)
-
 	err := initializeStorage()
 	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetT(t)
 
 	createCorrectData(t)
 
@@ -165,12 +163,12 @@ func TestBlocksStorageListWithValuesCorrect(t *testing.T) {
 func TestBlocksStorageListWithValuesIncorrect(t *testing.T) {
 	// t.SkipNow()
 
-	databaseResetT(t)
-
 	err := initializeStorage()
 	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
+		t.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetT(t)
 
 	createIncorrectData(t)
 
@@ -188,67 +186,6 @@ func TestBlocksStorageListWithValuesIncorrect(t *testing.T) {
 			return
 		}
 		height++
-	}
-
-	databaseResetT(t)
-	closeStorageManager()
-}
-
-// Test that mimics a first run with clean database
-func TestStartupSequenceFirstRun(t *testing.T) {
-	// t.SkipNow()
-
-	databaseResetT(t)
-
-	err := initializeStorage()
-	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
-	}
-
-	if err := startUp(t); err != nil {
-		t.Errorf("failed the startup: %v", err)
-	}
-
-	databaseResetT(t)
-	closeStorageManager()
-}
-
-// Test that mimics a normal run with correct data
-func TestCheckBlockChainWithCorrectData(t *testing.T) {
-	// t.SkipNow()
-
-	databaseResetT(t)
-
-	err := initializeStorage()
-	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
-	}
-
-	createCorrectData(t)
-
-	if err := startUp(t); err != nil {
-		t.Errorf("failed the startup: %v", err)
-	}
-
-	databaseResetT(t)
-	closeStorageManager()
-}
-
-// Test that mimics a normal run with correct data
-func TestCheckBlockChainWithIncorrectData(t *testing.T) {
-	// t.SkipNow()
-
-	databaseResetT(t)
-
-	err := initializeStorage()
-	if err != nil {
-		t.Fatalf("could not create storage manager in '%s'", dbPath)
-	}
-
-	createIncorrectData(t)
-
-	if err := startUp(t); err != nil {
-		t.Errorf("failed the startup: %v", err)
 	}
 
 	databaseResetT(t)
@@ -293,176 +230,37 @@ func closeStorageManager() {
 	sm.Close()
 }
 
-func startUp(t *testing.T) error {
-	// Check if we have any blocks
-	blocksCount, err := blockStorage.Count()
-	if err != nil {
-		return err
-	}
-
-	// Check if we have any transactions
-	transactionsCount, err := transactionStorage.Count()
-	if err != nil {
-		databaseResetT(t)
-		closeStorageManager()
-		return err
-	}
-
-	status := &pb.Status{}
-	err = statusStorage.Get(statusKey, status)
-	if errors.Is(err, leveldb.ErrNotFound) {
-
-		// We have blocks or transactions but status is missing
-		if blocksCount > 0 || transactionsCount > 0 {
-			// Attempt to rescan the database
-			if err := reScanBlockChain(); err != nil {
-				// Ok, data is well corrupted
-				databaseResetT(t)
-				closeStorageManager()
-				return err
-			}
-		} else {
-			if err := initiateBlockChain(); err != nil {
-				databaseResetT(t)
-				closeStorageManager()
-				return err
-			}
-		}
-	} else {
-		if status.LastBlock != blocksCount-1 {
-			// Attempt to rescan the database
-			if err := reScanBlockChain(); err != nil {
-				// Ok, data is well corrupted
-				databaseResetT(t)
-				closeStorageManager()
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// Initializes the block chain with block zero and sets status
-func initiateBlockChain() error {
-	blockZero := getBlockZero()
-
-	blockZeroKey := sm.BlockKey(blockZero.Height)
-	if err := blockStorage.Put(blockZeroKey, blockZero); err != nil {
-		return err
-	}
-	status := &pb.Status{
-		LastBlock: 0,
-	}
-	if err := statusStorage.Put(statusKey, status); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// Re-scans the database and tries to recover status
-func reScanBlockChain() error {
-	blocks, err := blockStorage.ListValues(func() *pb.Block {
-		return &pb.Block{}
-	})
-	if err != nil {
-		return err
-	}
-
-	// Check that all blocks are sequential
-	var (
-		height   uint64 = 0
-		previous        = getBlockZero()
-	)
-
-	for _, block := range blocks {
-		// fmt.Printf("block: %d, '%s', '%s'\n", block.Height, block.Hash, block.PreviousHash)
-		if block.Height != height {
-			// return fmt.Errorf("mismatched block height, expected %d, got %d", height, block.Height)
-			return nil
-		}
-
-		if block.Height == 0 && block.PreviousHash != previous.PreviousHash {
-			// return fmt.Errorf("chain is broken: block %d does not have the the correct previous hash", block.Height)
-			return nil
-		}
-		if block.Height != 0 && block.PreviousHash != previous.Hash {
-			// return fmt.Errorf("chain is broken: block %d does not have the the correct previous hash", block.Height)
-			return nil
-		}
-
-		previous = block
-		height++
-	}
-	status := &pb.Status{
-		LastBlock: height - 1,
-	}
-	if err := statusStorage.Put(statusKey, status); err != nil {
-		return err
-	}
-
-	// Check for orphaned transactions
-	transactions, err := transactionStorage.ListValues(func() *pb.Transaction {
-		return &pb.Transaction{}
-	})
-	if err != nil {
-		return err
-	}
-	for _, transaction := range transactions {
-		key := sm.BlockKey(transaction.BlockHeight)
-		ok, err := blockStorage.Has(key)
-		if err != nil {
-			return err
-		}
-		if !ok {
-			return err
-		}
-	}
-	return nil
-}
-
-func getBlockZero() *pb.Block {
-	block := &pb.Block{
-		Height:       0,
-		PreviousHash: "BZERO",
-		Timestamp:    0, // This must be the inception date
-		MerkleRoot:   "MZERO",
-	}
-	block.SetHash()
-	return block
-}
-
 // Reset the database
 func databaseReset() error {
 	// Remove test data, start fresh
 
 	// Delete Status
-	// if err := statusStorage.Delete(statusKey); err != nil {
-	// 	return err
-	// }
+	if err := statusStorage.Delete(statusKey); err != nil {
+		return err
+	}
 
 	// Delete blocks
-	// blocks, err := blockStorage.ListValues(func() *pb.Block { return &pb.Block{} })
-	// if err != nil {
-	// 	return err
-	// }
-	// for _, block := range blocks {
-	// 	key := sm.BlockKey(block.Height)
-	// 	if err := blockStorage.Delete(key); err != nil {
-	// 		return err
-	// 	}
-	// }
+	blocks, err := blockStorage.ListValues(func() *pb.Block { return &pb.Block{} })
+	if err != nil {
+		return err
+	}
+	for _, block := range blocks {
+		key := sm.BlockKey(block.Height)
+		if err := blockStorage.Delete(key); err != nil {
+			return err
+		}
+	}
 
 	// Delete transactions
-	// transactions, err := transactionStorage.ListKeys()
-	// if err != nil {
-	// 	return err
-	// }
-	// for _, key := range transactions {
-	// 	if err := transactionStorage.Delete(key); err != nil {
-	// 		return err
-	// 	}
-	// }
+	transactions, err := transactionStorage.ListKeys()
+	if err != nil {
+		return err
+	}
+	for _, key := range transactions {
+		if err := transactionStorage.Delete(key); err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
@@ -470,14 +268,14 @@ func databaseReset() error {
 // Reset the database with testing.T
 func databaseResetT(t *testing.T) {
 	if err := databaseReset(); err != nil {
-		t.Fatalf("could not delete folder '%s': %v", dbPath, err)
+		t.Fatalf("could not delete data: %v", err)
 	}
 }
 
 // Reset the database with `testing.B`
 func databaseResetB(b *testing.B) {
 	if err := databaseReset(); err != nil {
-		b.Fatalf("could not delete folder '%s': %v", dbPath, err)
+		b.Fatalf("could not delete data: %v", err)
 	}
 }
 
@@ -501,8 +299,8 @@ func createCorrectData(t *testing.T) {
 	for height := range limit {
 		// Block
 		if height == 0 {
-			block = getBlockZero()
-			previous = getBlockZero()
+			block = pb.NewBlockZero()
+			previous = pb.NewBlockZero()
 		} else {
 			block = &pb.Block{
 				Height:       height,
@@ -551,8 +349,8 @@ func createIncorrectData(t *testing.T) {
 	for height := range limit - 1 {
 		// Block
 		if height == 0 {
-			block = getBlockZero()
-			previous = getBlockZero()
+			block = pb.NewBlockZero()
+			previous = pb.NewBlockZero()
 		} else {
 			block = &pb.Block{
 				Height:       height,
@@ -595,12 +393,12 @@ func createIncorrectData(t *testing.T) {
 
 // Benchmark helper to create many Blocks
 func createBlocks(b *testing.B, count uint64) {
-	databaseResetB(b)
-
 	err := initializeStorage()
 	if err != nil {
-		b.Fatalf("could not create storage manager in '%s'", dbPath)
+		b.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
+
+	databaseResetB(b)
 
 	var block *pb.Block
 	for i := range count {
@@ -631,10 +429,10 @@ func createBlocks(b *testing.B, count uint64) {
 func readBlocks(b *testing.B, count uint64) {
 	err := initializeStorage()
 	if err != nil {
-		b.Fatalf("could not create storage manager in '%s'", dbPath)
+		b.Fatalf("could not open storage manager in '%s': %v", dbPath, err)
 	}
 
-	block := &pb.Block{}
+	var block *pb.Block
 	for i := range count {
 		key := sm.BlockKey(i)
 		if err := blockStorage.Get(key, block); err != nil {

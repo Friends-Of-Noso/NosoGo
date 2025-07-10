@@ -7,6 +7,20 @@ import (
 	"strings"
 )
 
+// Creates a new transaction
+func NewTransaction(
+	height uint64,
+) (*Transaction, error) {
+	// TODO: Add more fields
+	transaction := &Transaction{
+		BlockHeight: height,
+	}
+	if err := transaction.SetHash(); err != nil {
+		return nil, fmt.Errorf("error creating new transaction: %v", err)
+	}
+	return transaction, nil
+}
+
 // Sets the Hash field of the transaction
 func (t *Transaction) SetHash() error {
 	// TODO: Get more values in here
