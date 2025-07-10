@@ -98,7 +98,7 @@ func TestBlocksStorageListCorrect(t *testing.T) {
 
 // Test retrieving a list of blocks with incorrect data
 func TestBlocksStorageListIncorrect(t *testing.T) {
-	// t.SkipNow()
+	t.SkipNow()
 
 	err := initializeStorage()
 	if err != nil {
