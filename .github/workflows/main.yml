@@ -43,7 +43,7 @@ jobs:
       - name: Exporting Go version
         run: |
           {
-            echo 'go_version=$(go version | cut -d" " -f3)'
+            echo "go_version=$(go version | cut -d' ' -f3)"
           } >> "$GITHUB_ENV"
 
       - name: Go Mod Tidy
