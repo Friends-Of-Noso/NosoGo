@@ -40,6 +40,12 @@ jobs:
         with:
           go-version: ${{ matrix.go }}
 
+      - name: Exporting Go version
+        run: |
+          {
+            echo "go_version=$(go version)"
+          } >> "$GITHUB_ENV"
+
       - name: Go Mod Tidy
         run: go mod tidy
 
@@ -56,7 +62,7 @@ jobs:
         if: matrix.go == 'stable'
         uses: actions/upload-artifact@v4
         with:
-          name: nosogo-${{ matrix.os }}-go_${{ matrix.go }}
+          name: nosogo-${{ matrix.os }}-go_${{ env.go_version }}
           path: bin/nosogo*
 
   release:
