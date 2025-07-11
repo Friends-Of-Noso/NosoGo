@@ -5,9 +5,11 @@ import (
 	"net/http"
 	"sync"
 
-	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
+
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 type (
@@ -31,14 +33,9 @@ type (
 		nodeAddress multiaddr.Multiaddr
 		nodePort    int
 		nodeId      string
-	}
-
-	// Response structures
-	PeerInfo struct {
-		Address string `json:"address"`
-		Port    int    `json:"port"`
-		Id      string `json:"id"`
-		Mode    string `json:"mode"`
+		dns         *pb.PeerList
+		seeds       *pb.PeerList
+		nodes       *pb.PeerList
 	}
 )
 
@@ -65,8 +62,39 @@ func NewDNS(
 		nodeAddress: nodeAddress,
 		nodePort:    nodePort,
 		nodeId:      nodeId,
-		mode:        JSON,
+		mode:        mode,
+		dns:         pb.NewPeerList(pb.DNS),
+		seeds:       pb.NewPeerList(pb.SEEDS),
+		nodes:       pb.NewPeerList(pb.NODES),
 	}
+
+	dns.dns.Put(&pb.PeerInfo{
+		Address: address,
+		Port:    int32(port),
+		Id:      nodeId,
+		Mode:    "dns",
+	})
+
+	dns.seeds.Put(&pb.PeerInfo{
+		Address: "10.42.0.104", // BatchNAS
+		Port:    8080,
+		Id:      "QmUnknown",
+		Mode:    "seed",
+	})
+
+	dns.nodes.Put(&pb.PeerInfo{
+		Address: "10.42.0.101", // BatchDev
+		Port:    8080,
+		Id:      "QmUnknown",
+		Mode:    "node",
+	})
+
+	dns.nodes.Put(&pb.PeerInfo{
+		Address: "10.42.0.102", // BatchDev
+		Port:    8080,
+		Id:      "QmUnknown",
+		Mode:    "node",
+	})
 
 	// Register routes
 	switch mode {
@@ -106,6 +134,10 @@ func (dns *DNS) ShutDown() {
 	if err := dns.server.Shutdown(dns.ctx); err != nil {
 		log.Error("dns shutdown failed", err)
 	}
+}
+
+func (dns *DNS) GetMode() DNSMode {
+	return dns.mode
 }
 
 // DNS: Handle 404

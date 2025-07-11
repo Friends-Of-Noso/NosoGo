@@ -15,7 +15,6 @@ import (
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"google.golang.org/protobuf/proto"
 
@@ -28,10 +27,6 @@ import (
 
 const (
 	cNodePortFlag = "node-port"
-)
-
-var (
-	config = cfg.DefaultConfig()
 )
 
 type Node struct {
@@ -76,11 +71,13 @@ func NewNode(
 	mode string,
 	dnsAddress string,
 	dnsPort int,
-	configPath string,
-	dbPath string,
+	config *cfg.Config,
 	seed string, // This needs to go away
 ) (*Node, error) {
-	// TODO: This entire key thing needs a rethink!!
+	// if !utils.FileExists(configPath) {
+	// 	return nil, fmt.Errorf("could not find config ", configPath)
+	// }
+
 	var (
 		privateKey    crypto.PrivKey
 		publicKey     crypto.PubKey
@@ -94,7 +91,7 @@ func NewNode(
 		log.Fatalf("%v", err)
 	}
 
-	sm, err := store.NewStorageManager(dbPath)
+	sm, err := store.NewStorageManager(config.GetDatabasePath())
 	if err != nil {
 		return nil, err
 	}
@@ -127,8 +124,8 @@ func NewNode(
 		config.Node.PrivateKey = configPrivKey
 		config.Node.PublicKey = configPubKey
 
-		if err := cfg.WriteConfig(viper.ConfigFileUsed(), config); err != nil {
-			log.Fatalf("could save config structure: %v", err)
+		if err := config.WriteConfig(); err != nil {
+			log.Fatalf("could not save config structure: %v", err)
 		}
 
 	} else {

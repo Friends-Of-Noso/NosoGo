@@ -6,8 +6,6 @@ import (
 	"reflect"
 
 	"google.golang.org/protobuf/proto"
-
-	"github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 func (dns *DNS) getDNSHandlerProtoBuf(w http.ResponseWriter, r *http.Request) {
@@ -16,16 +14,7 @@ func (dns *DNS) getDNSHandlerProtoBuf(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value := &protobuf.DNSPeerResponse{
-		Dns: &protobuf.PeerInfo{
-			Address: dns.dnsAddress,
-			Port:    int32(dns.dnsPort),
-			Id:      dns.nodeId,
-			Mode:    "dns",
-		},
-	}
-
-	writeProtobuf(w, value)
+	dns.dns.WriteProtobuf(w)
 }
 
 func (dns *DNS) getSeedsHandlerProtoBuf(w http.ResponseWriter, r *http.Request) {
@@ -34,15 +23,7 @@ func (dns *DNS) getSeedsHandlerProtoBuf(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	value := &protobuf.DNSSeedsResponse{
-		Seeds: []*protobuf.PeerInfo{
-			{Address: "10.0.0.1", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
-			{Address: "10.0.0.2", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
-			{Address: "10.0.0.3", Port: 8080, Id: "QmYou'reOnFireSeed", Mode: "seed"},
-		},
-	}
-
-	writeProtobuf(w, value)
+	dns.seeds.WriteProtobuf(w)
 }
 
 func (dns *DNS) getNodesHandlerProtoBuf(w http.ResponseWriter, r *http.Request) {
@@ -51,15 +32,7 @@ func (dns *DNS) getNodesHandlerProtoBuf(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	value := &protobuf.DNSNodesResponse{
-		Nodes: []*protobuf.PeerInfo{
-			{Address: "10.0.0.4", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
-			{Address: "10.0.0.5", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
-			{Address: "10.0.0.6", Port: 8080, Id: "QmYou'reOnFireNode", Mode: "node"},
-		},
-	}
-
-	writeProtobuf(w, value)
+	dns.nodes.WriteProtobuf(w)
 }
 
 // Helper to write ProtoBuf response

@@ -7,22 +7,8 @@ import (
 	"unicode"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
-	cfg "github.com/Friends-Of-Noso/NosoGo/config"
-	log "github.com/Friends-Of-Noso/NosoGo/logger"
-	"github.com/Friends-Of-Noso/NosoGo/utils"
 	ver "github.com/Friends-Of-Noso/NosoGo/version"
-)
-
-const (
-	cLogLevelFlag = "log-level"
-)
-
-var (
-	config   = cfg.DefaultConfig()
-	cfgFile  string
-	logLevel string
 )
 
 // rootCmd represents the base command when called without any subcommands
@@ -46,7 +32,6 @@ func Execute() {
 
 func init() {
 	// log.Debug("root.init")
-	cobra.OnInitialize(initConfig)
 
 	// Custom Usage Function
 	rootCmd.SetUsageFunc(rootUsageFunc)
@@ -57,87 +42,9 @@ func init() {
 	// Cobra supports persistent flags, which, if defined here,
 	// will be global for your application.
 
-	logLevelHelp := fmt.Sprintf(
-		// "log level: '%s', '%s', '%s', '%s'",
-		"log level: '%s', '%s'",
-		cfg.LogLevelInfo,
-		// cfg.LogLevelWarn,
-		// cfg.LogLevelError,
-		cfg.LogLevelDebug)
-	rootCmd.PersistentFlags().StringVarP(&logLevel, cLogLevelFlag, "l", config.LogLevel, logLevelHelp)
-	viper.BindPFlag(cLogLevelFlag, rootCmd.Flags().Lookup(cLogLevelFlag))
-	err := nodeCmd.RegisterFlagCompletionFunc(cLogLevelFlag,
-		func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-			return []string{
-				cfg.LogLevelInfo,
-				// cfg.LogLevelWarn,
-				// cfg.LogLevelError,
-				cfg.LogLevelDebug,
-			}, cobra.ShellCompDirectiveNoFileComp
-		})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error registering flag completion function: %v", err)
-		os.Exit(1)
-	}
-
 	// Cobra also supports local flags, which will only run
 	// when this action is called directly.
 	//rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-}
-
-// initConfig reads in config file and ENV variables if set.
-func initConfig() {
-	// fmt.Fprintf(os.Stderr, "root.initconfig")
-	if !cfg.ValidLogLevels[logLevel] {
-		fmt.Fprintf(os.Stderr, "wrong log level: '%s'\n", logLevel)
-		os.Exit(1)
-	}
-	if cfgFile != "" {
-		if !utils.FileExists(cfgFile) {
-			fmt.Fprintln(os.Stderr, "no config file found")
-			fmt.Fprintf(os.Stderr, "your choice was '%s'\n", cfgFile)
-			os.Exit(1)
-		}
-		// Use config file from the flag.
-		viper.SetConfigType("toml")
-		viper.SetConfigFile(cfgFile)
-	} else {
-		// Search config in home directory with name ".nosogod" (without extension).
-		viper.AddConfigPath(config.GetConfigFolder())
-		viper.SetConfigType("toml")
-		viper.SetConfigFile(config.GetConfigFile())
-	}
-
-	viper.AutomaticEnv() // read in environment variables that match
-
-	if utils.FileExists(viper.ConfigFileUsed()) {
-		beforeLogLevel := logLevel
-		// Read Config
-		if err := viper.ReadInConfig(); err == nil {
-			fmt.Fprintf(os.Stderr, "Using config file: %s\n", viper.ConfigFileUsed())
-
-			err := viper.Unmarshal(config)
-			if err != nil {
-				fmt.Printf("Could not unmarshal config: %s\n", err)
-				os.Exit(1)
-			}
-		}
-
-		if beforeLogLevel != config.LogLevel {
-			logLevel = beforeLogLevel
-		}
-		if !cfg.ValidLogLevels[logLevel] {
-			fmt.Fprintf(os.Stderr, "wrong log level: '%s'\n", logLevel)
-			os.Exit(1)
-		}
-		// Logger
-		utils.EnsureDir(config.GetLogsFolder(), 0755)
-		log.SetFileAndLevel(config.GetLogFile(), logLevel)
-	} else {
-		fmt.Fprintln(os.Stderr, "no config file found")
-		fmt.Fprintf(os.Stderr, "should be '%s'\n", viper.ConfigFileUsed())
-		os.Exit(1)
-	}
 }
 
 func rootUsageFunc(cmd *cobra.Command) error {

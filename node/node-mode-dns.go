@@ -33,9 +33,9 @@ func (n *Node) runModeDNS() {
 	}
 
 	log.Infof("node(dns): Listening on %s/p2p/%s", n.p2pHost.Addrs()[0], n.p2pHost.ID())
-	if config.LogLevel == "debug" {
-		//
-	}
+	// if config.LogLevel == "debug" {
+	// 	//
+	// }
 
 	err := checkPort(n.dnsPort, cDNSPortFlag, cfg.DefaultDNSPort)
 	if err != nil {
@@ -45,7 +45,17 @@ func (n *Node) runModeDNS() {
 	}
 
 	nodeID := fmt.Sprintf("%s", n.p2pHost.ID())
-	dnsServer, err := dns.NewDNS(n.ctx, n.wg, n.cmd, n.dnsAddress, n.dnsPort, n.address, n.port, nodeID, dns.JSON)
+	dnsServer, err := dns.NewDNS(
+		n.ctx,
+		n.wg,
+		n.cmd,
+		n.dnsAddress,
+		n.dnsPort,
+		n.address,
+		n.port,
+		nodeID,
+		dns.JSON,
+	)
 	if err != nil {
 		log.Error("could not create DNS server", err)
 		n.Shutdown()

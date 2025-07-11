@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
-	cfg "github.com/Friends-Of-Noso/NosoGo/config"
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
@@ -48,23 +47,15 @@ func runInit(cmd *cobra.Command, args []string) {
 
 	// Logs Folder
 	utils.EnsureDir(config.GetLogsFolder(), 0755)
-	if logLevel != "" {
-		log.SetFileAndLevel(config.GetLogFile(), logLevel)
-	} else {
-		log.SetFileAndLevel(config.GetLogFile(), config.LogLevel)
-	}
+	log.SetFileAndLevel(config.GetLogFile(), config.LogLevel)
 
 	// Viper Config File
 	viper.AddConfigPath(config.GetConfigFolder())
 	viper.SetConfigType("toml")
 	viper.SetConfigFile(config.GetConfigFile())
-	if err := viper.SafeWriteConfig(); err != nil {
-		fmt.Fprintf(os.Stderr, "error saving config file: '%s'", err)
-		os.Exit(1)
-	}
 
 	// Write to Config File
-	err := cfg.WriteConfig(viper.ConfigFileUsed(), config)
+	err := config.WriteConfig()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "could not save config structure: %v", err)
 		os.Exit(1)
@@ -73,12 +64,12 @@ func runInit(cmd *cobra.Command, args []string) {
 	// log.Infof("Created config file at '%s'", config.GetConfigFile())
 
 	// Create LevelDB stuff
-	db, err := leveldb.OpenFile(config.GetDatabaseFolder(), nil)
+	db, err := leveldb.OpenFile(config.GetDatabasePath(), nil)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error creating database: %v", err)
 		os.Exit(1)
 	}
 	defer db.Close()
 
-	log.Infof("Created database at '%s'", config.GetDatabaseFolder())
+	fmt.Fprintf(os.Stderr, "created database at '%s'\n", config.GetDatabasePath())
 }

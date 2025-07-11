@@ -9,7 +9,7 @@ func (n *Node) runModeSeed() {
 }
 
 func (n *Node) shutdownSeed() {
-	if config.LogLevel == "debug" {
-		//
-	}
+	// if config.LogLevel == "debug" {
+	// 	//
+	// }
 }

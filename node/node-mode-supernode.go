@@ -9,7 +9,7 @@ func (n *Node) runModeSuperNode() {
 }
 
 func (n *Node) shutdownSuperNode() {
-	if config.LogLevel == "debug" {
-		//
-	}
+	// if config.LogLevel == "debug" {
+	// 	//
+	// }
 }

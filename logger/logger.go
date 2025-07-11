@@ -74,7 +74,6 @@ func SetFileAndLevel(logFile string, logLevel string) {
 		// level = zerolog.InfoLevel
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	}
-
 }
 
 func Print(msg string) {

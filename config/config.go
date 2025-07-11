@@ -7,7 +7,6 @@ import (
 
 	ms "github.com/mitchellh/mapstructure"
 	toml "github.com/pelletier/go-toml/v2"
-	"github.com/spf13/viper"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"github.com/Friends-Of-Noso/NosoGo/utils"
@@ -34,9 +33,9 @@ const (
 	DefaultNodePort    = 45050
 	DefaultNodeMode    = NodeModeNode
 	DefaultNodeKey     = "Will be changed upon first run"
-	DefaultAPIAddress  = "127.0.0.1"
+	DefaultAPIAddress  = "0.0.0.0"
 	DefaultAPIPort     = 45505
-	DefaultDNSAddress  = "127.0.0.1"
+	DefaultDNSAddress  = "0.0.0.0"
 	DefaultDNSPort     = 8080
 )
 
@@ -106,7 +105,7 @@ func (c *Config) GetLogFile() string {
 	}
 }
 
-func (c *Config) GetDatabaseFolder() string {
+func (c *Config) GetDatabasePath() string {
 	if c.ConfigDir != "" && c.DatabasePath != "" {
 		return path.Join(c.ConfigDir, c.DatabasePath)
 	} else {
@@ -124,15 +123,15 @@ func homeFolder() string {
 	return home
 }
 
-func WriteConfig(file string, config *Config) error {
-	log.Infof("Writing config file at: %s", file)
+func (c *Config) WriteConfig() error {
+	log.Debugf("changing the keys on: '%s'\n", c.GetConfigFile())
 	var outMap map[string]any
-	ms.Decode(config, &outMap)
+	ms.Decode(c, &outMap)
 	b, err := toml.Marshal(outMap)
 	if err != nil {
 		return fmt.Errorf("could not marshal config structure: %v", err)
 	}
-	if err := utils.MustWriteFile(viper.ConfigFileUsed(), b, 0644); err != nil {
+	if err := utils.MustWriteFile(c.GetConfigFile(), b, 0644); err != nil {
 		return err
 	}
 	return nil

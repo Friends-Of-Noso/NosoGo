@@ -82,7 +82,7 @@ message NetworkMessage {
 
 // DNS
 message DNSPeerResponse {
-  PeerInfo dns = 1;
+  repeated PeerInfo dns = 1;
 }
 
 message DNSSeedsResponse {
