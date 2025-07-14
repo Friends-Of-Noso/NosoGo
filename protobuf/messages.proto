@@ -87,8 +87,3 @@ message DNSPeersResponse {
   repeated PeerInfo peers = 1;
 }
 
-message DNSResolveResponse {
-  bool success = 1;
-  PeerInfo peer = 2;
-}
-

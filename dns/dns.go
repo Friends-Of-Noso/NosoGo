@@ -47,8 +47,6 @@ func NewDNS(
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
-	log.Debugf("nodePeer.Address: '%s'", nodePeer.Address)
-
 	dns := &DNS{
 		ctx:  ctx,
 		quit: quit,

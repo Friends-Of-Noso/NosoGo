@@ -7,12 +7,11 @@
 package protobuf
 
 import (
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
-
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -272,29 +271,29 @@ type PeerInfo struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (drr *PeerInfo) Reset() {
-	*drr = PeerInfo{}
+func (x *PeerInfo) Reset() {
+	*x = PeerInfo{}
 	mi := &file_protobuf_messages_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(drr))
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (drr *PeerInfo) String() string {
-	return protoimpl.X.MessageStringOf(drr)
+func (x *PeerInfo) String() string {
+	return protoimpl.X.MessageStringOf(x)
 }
 
 func (*PeerInfo) ProtoMessage() {}
 
-func (drr *PeerInfo) ProtoReflect() protoreflect.Message {
+func (x *PeerInfo) ProtoReflect() protoreflect.Message {
 	mi := &file_protobuf_messages_proto_msgTypes[3]
-	if drr != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(drr))
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
 			ms.StoreMessageInfo(mi)
 		}
 		return ms
 	}
-	return mi.MessageOf(drr)
+	return mi.MessageOf(x)
 }
 
 // Deprecated: Use PeerInfo.ProtoReflect.Descriptor instead.
@@ -302,44 +301,44 @@ func (*PeerInfo) Descriptor() ([]byte, []int) {
 	return file_protobuf_messages_proto_rawDescGZIP(), []int{3}
 }
 
-func (drr *PeerInfo) GetAddress() string {
-	if drr != nil {
-		return drr.Address
+func (x *PeerInfo) GetAddress() string {
+	if x != nil {
+		return x.Address
 	}
 	return ""
 }
 
-func (drr *PeerInfo) GetPort() int32 {
-	if drr != nil {
-		return drr.Port
+func (x *PeerInfo) GetPort() int32 {
+	if x != nil {
+		return x.Port
 	}
 	return 0
 }
 
-func (drr *PeerInfo) GetId() string {
-	if drr != nil {
-		return drr.Id
+func (x *PeerInfo) GetId() string {
+	if x != nil {
+		return x.Id
 	}
 	return ""
 }
 
-func (drr *PeerInfo) GetMode() string {
-	if drr != nil {
-		return drr.Mode
+func (x *PeerInfo) GetMode() string {
+	if x != nil {
+		return x.Mode
 	}
 	return ""
 }
 
-func (drr *PeerInfo) GetConnected() bool {
-	if drr != nil {
-		return drr.Connected
+func (x *PeerInfo) GetConnected() bool {
+	if x != nil {
+		return x.Connected
 	}
 	return false
 }
 
-func (drr *PeerInfo) GetDirection() string {
-	if drr != nil {
-		return drr.Direction
+func (x *PeerInfo) GetDirection() string {
+	if x != nil {
+		return x.Direction
 	}
 	return ""
 }
@@ -815,58 +814,6 @@ func (x *DNSPeersResponse) GetPeers() []*PeerInfo {
 	return nil
 }
 
-type DNSResolveResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	Peer          *PeerInfo              `protobuf:"bytes,2,opt,name=peer,proto3" json:"peer,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *DNSResolveResponse) Reset() {
-	*x = DNSResolveResponse{}
-	mi := &file_protobuf_messages_proto_msgTypes[12]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *DNSResolveResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DNSResolveResponse) ProtoMessage() {}
-
-func (x *DNSResolveResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_protobuf_messages_proto_msgTypes[12]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DNSResolveResponse.ProtoReflect.Descriptor instead.
-func (*DNSResolveResponse) Descriptor() ([]byte, []int) {
-	return file_protobuf_messages_proto_rawDescGZIP(), []int{12}
-}
-
-func (x *DNSResolveResponse) GetSuccess() bool {
-	if x != nil {
-		return x.Success
-	}
-	return false
-}
-
-func (x *DNSResolveResponse) GetPeer() *PeerInfo {
-	if x != nil {
-		return x.Peer
-	}
-	return nil
-}
-
 var File_protobuf_messages_proto protoreflect.FileDescriptor
 
 var file_protobuf_messages_proto_rawDesc = string([]byte{
@@ -971,13 +918,8 @@ var file_protobuf_messages_proto_rawDesc = string([]byte{
 	0x65, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x26, 0x0a, 0x05,
 	0x70, 0x65, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6e, 0x6f,
 	0x73, 0x6f, 0x67, 0x6f, 0x2e, 0x50, 0x65, 0x65, 0x72, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x05, 0x70,
-	0x65, 0x65, 0x72, 0x73, 0x22, 0x54, 0x0a, 0x12, 0x44, 0x4e, 0x53, 0x52, 0x65, 0x73, 0x6f, 0x6c,
-	0x76, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x18, 0x0a, 0x07, 0x73, 0x75,
-	0x63, 0x63, 0x65, 0x73, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x08, 0x52, 0x07, 0x73, 0x75, 0x63,
-	0x63, 0x65, 0x73, 0x73, 0x12, 0x24, 0x0a, 0x04, 0x70, 0x65, 0x65, 0x72, 0x18, 0x02, 0x20, 0x01,
-	0x28, 0x0b, 0x32, 0x10, 0x2e, 0x6e, 0x6f, 0x73, 0x6f, 0x67, 0x6f, 0x2e, 0x50, 0x65, 0x65, 0x72,
-	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x04, 0x70, 0x65, 0x65, 0x72, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2f,
-	0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x65, 0x72, 0x73, 0x42, 0x0c, 0x5a, 0x0a, 0x2e, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62,
+	0x75, 0x66, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 })
 
 var (
@@ -992,7 +934,7 @@ func file_protobuf_messages_proto_rawDescGZIP() []byte {
 	return file_protobuf_messages_proto_rawDescData
 }
 
-var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_protobuf_messages_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_protobuf_messages_proto_goTypes = []any{
 	(*Status)(nil),                            // 0: nosogo.Status
 	(*Block)(nil),                             // 1: nosogo.Block
@@ -1006,7 +948,6 @@ var file_protobuf_messages_proto_goTypes = []any{
 	(*NetworkMessageGetBlocksResponse)(nil),   // 9: nosogo.NetworkMessageGetBlocksResponse
 	(*NetworkMessage)(nil),                    // 10: nosogo.NetworkMessage
 	(*DNSPeersResponse)(nil),                  // 11: nosogo.DNSPeersResponse
-	(*DNSResolveResponse)(nil),                // 12: nosogo.DNSResolveResponse
 }
 var file_protobuf_messages_proto_depIdxs = []int32{
 	1,  // 0: nosogo.BlocksSubscriptionNewBlock.block:type_name -> nosogo.Block
@@ -1019,12 +960,11 @@ var file_protobuf_messages_proto_depIdxs = []int32{
 	8,  // 7: nosogo.NetworkMessage.get_blocks:type_name -> nosogo.NetworkMessageGetBlocks
 	9,  // 8: nosogo.NetworkMessage.get_blocks_response:type_name -> nosogo.NetworkMessageGetBlocksResponse
 	3,  // 9: nosogo.DNSPeersResponse.peers:type_name -> nosogo.PeerInfo
-	3,  // 10: nosogo.DNSResolveResponse.peer:type_name -> nosogo.PeerInfo
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	10, // [10:10] is the sub-list for method output_type
+	10, // [10:10] is the sub-list for method input_type
+	10, // [10:10] is the sub-list for extension type_name
+	10, // [10:10] is the sub-list for extension extendee
+	0,  // [0:10] is the sub-list for field type_name
 }
 
 func init() { file_protobuf_messages_proto_init() }
@@ -1047,7 +987,7 @@ func file_protobuf_messages_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_protobuf_messages_proto_rawDesc), len(file_protobuf_messages_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

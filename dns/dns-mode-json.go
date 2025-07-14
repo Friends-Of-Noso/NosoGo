@@ -46,15 +46,15 @@ func (dns *DNS) getResolveHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ip := r.PathValue("ip")
+	if ip == "" {
+		http.Error(w, "The IP is empty", http.StatusBadRequest)
+		return
+	}
 	log.Debugf("resolving for '%s'", ip)
 
 	if dns.nodePeer.Address == ip {
 		log.Debug("dns peer found")
-		found := &pb.DNSResolveResponse{
-			Success: true,
-			Peer:    dns.nodePeer,
-		}
-		found.WriteJSON(w)
+		dns.nodePeer.WriteJSON(w)
 		return
 	}
 
@@ -62,11 +62,7 @@ func (dns *DNS) getResolveHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	for _, peer := range seeds {
 		if peer.Address == ip {
 			log.Debug("seed peer found")
-			found := &pb.DNSResolveResponse{
-				Success: true,
-				Peer:    peer,
-			}
-			found.WriteJSON(w)
+			peer.WriteJSON(w)
 			return
 		}
 	}
@@ -75,20 +71,11 @@ func (dns *DNS) getResolveHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	for _, peer := range nodes {
 		if peer.Address == ip {
 			log.Debug("node peer found")
-			found := &pb.DNSResolveResponse{
-				Success: true,
-				Peer:    peer,
-			}
-			found.WriteJSON(w)
+			peer.WriteJSON(w)
 			return
 		}
 	}
 
 	log.Debug("no peer found")
-	notFound := &pb.DNSResolveResponse{
-		Success: false,
-		Peer:    nil,
-	}
-
-	notFound.WriteJSON(w)
+	http.Error(w, "No peer found", http.StatusNotFound)
 }

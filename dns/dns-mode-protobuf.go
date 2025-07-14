@@ -48,11 +48,7 @@ func (dns *DNS) getResolveHandlerProtoBuf(w http.ResponseWriter, r *http.Request
 
 	if dns.nodePeer.Address == ip {
 		log.Debug("dns peer found")
-		found := &pb.DNSResolveResponse{
-			Success: false,
-			Peer:    dns.nodePeer,
-		}
-		found.WriteProtobuf(w)
+		dns.nodePeer.WriteProtoBuf(w)
 		return
 	}
 
@@ -60,11 +56,7 @@ func (dns *DNS) getResolveHandlerProtoBuf(w http.ResponseWriter, r *http.Request
 	for _, peer := range seeds {
 		if peer.Address == ip {
 			log.Debug("seed peer found")
-			found := &pb.DNSResolveResponse{
-				Success: false,
-				Peer:    peer,
-			}
-			found.WriteProtobuf(w)
+			peer.WriteProtoBuf(w)
 			return
 		}
 	}
@@ -73,20 +65,11 @@ func (dns *DNS) getResolveHandlerProtoBuf(w http.ResponseWriter, r *http.Request
 	for _, peer := range nodes {
 		if peer.Address == ip {
 			log.Debug("node peer found")
-			found := &pb.DNSResolveResponse{
-				Success: false,
-				Peer:    peer,
-			}
-			found.WriteProtobuf(w)
+			peer.WriteProtoBuf(w)
 			return
 		}
 	}
 
 	log.Debug("no peer found")
-	notFound := &pb.DNSResolveResponse{
-		Success: false,
-		Peer:    nil,
-	}
-
-	notFound.WriteProtobuf(w)
+	http.Error(w, "No peer found", http.StatusNotFound)
 }

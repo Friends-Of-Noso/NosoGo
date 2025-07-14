@@ -8,7 +8,6 @@ import (
 	reflect "reflect"
 	"sync"
 
-	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -39,7 +38,6 @@ func (pl *PeerList) Add(peer *PeerInfo) {
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
 
-	log.Debugf("peer: '%v'", peer)
 	pl.peers[peer.Id] = peer
 }
 
