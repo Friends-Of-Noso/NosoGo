@@ -2,6 +2,66 @@
 
 Notable changes up to the last release.
 
+## [unreleased]
+
+### ⛰️  Features
+
+- Added mutex to the `LevelDB` store - ([70a3722](https://github.com/Friends-Of-Noso/NosoGo/commit/70a372286b9851a6fccf1b6f8cebac02637dbde7))
+- Using `GetMyIP()` - ([9a68755](https://github.com/Friends-Of-Noso/NosoGo/commit/9a68755b65f99b5f5d54a885bfd8a290775b580d))
+- Adding `getmyip` - ([24ddea4](https://github.com/Friends-Of-Noso/NosoGo/commit/24ddea4f7cb7afd4f823398321837520e4ea3894))
+- Startup checks are done - ([cd695b8](https://github.com/Friends-Of-Noso/NosoGo/commit/cd695b84290e7cc34ec06bf90a6766c96fc9c609))
+
+### 🐛 Bug Fixes
+
+- *(cliff.toml)* Removed problematic `typo` util - ([14006cc](https://github.com/Friends-Of-Noso/NosoGo/commit/14006ccc26008069ad42d31825ab4cf4ea0a72a3))
+- Proper use of `quit` channel - ([db490c9](https://github.com/Friends-Of-Noso/NosoGo/commit/db490c94cbbe3064f3049842d6d66f6097b8ba1b))
+- Finally cracked flag<->config sync - ([76545a8](https://github.com/Friends-Of-Noso/NosoGo/commit/76545a8af53090896e706c23eab3c3848d4d71d9))
+- Exit strategies: Signal and `quit` channel - ([5f42ff8](https://github.com/Friends-Of-Noso/NosoGo/commit/5f42ff84d35c939fddeea24ded12ac150a791227))
+
+### 🚜 Refactor
+
+- Now using `PeerList` on `/v1/dns` - ([43aedfd](https://github.com/Friends-Of-Noso/NosoGo/commit/43aedfdff1d8485dcd72aba47ed17bf32dbbeb4d))
+- Moved `DNS` resolve helpers to `utils` - ([31f8dcb](https://github.com/Friends-Of-Noso/NosoGo/commit/31f8dcb32a4178b7805e0249e78c08c839f30fe5))
+- Network message names - ([4f49c67](https://github.com/Friends-Of-Noso/NosoGo/commit/4f49c6743ed2bc387e90e6d1488e3826b0c60560))
+
+### 📚 Documentation
+
+- *(CHANGELOG)* Removing failed release - ([302118c](https://github.com/Friends-Of-Noso/NosoGo/commit/302118ce222bb4cc8d24fb8a2e2ee961194babee))
+
+### 🎨 Styling
+
+- Better log generation - ([545407e](https://github.com/Friends-Of-Noso/NosoGo/commit/545407e991ea8c048107fedee4336df897ca2241))
+- Using `map.Clone()` - ([36f8a90](https://github.com/Friends-Of-Noso/NosoGo/commit/36f8a906485768b185e809c4dc239db8c09b9b7e))
+- Better formatting strings - ([21d7ab6](https://github.com/Friends-Of-Noso/NosoGo/commit/21d7ab601870d647041a383f42bbe9b8a48a05ec))
+- Using `any` instead of `interface{}` - ([b73008b](https://github.com/Friends-Of-Noso/NosoGo/commit/b73008b49d642a43be7e251d11aa7838ebe4255e))
+- Removing commented code - ([2174d5c](https://github.com/Friends-Of-Noso/NosoGo/commit/2174d5c42280e87b93359b0ec7569bd8250069a4))
+
+### 🧪 Testing
+
+- Adding tests for `PeerList` - ([f4db85a](https://github.com/Friends-Of-Noso/NosoGo/commit/f4db85aaabdb0fa568cb9b3eb2c10250e32e7110))
+- Using `assert` - ([7c7d501](https://github.com/Friends-Of-Noso/NosoGo/commit/7c7d501647ec7f59fe1efc7bf92ca2a8da366371))
+- Skipping `TestBlocksStorageListIncorrect` - ([de54cd2](https://github.com/Friends-Of-Noso/NosoGo/commit/de54cd2868df85980ab064fde64e9edb0d51b9bd))
+- Deleting via `LevelDB`, not the `OS` - ([9a7a9ab](https://github.com/Friends-Of-Noso/NosoGo/commit/9a7a9ab6a8f48f8d647a44f3fef380053c9b9376))
+- WHat the error on `GitHub`? - ([50e5288](https://github.com/Friends-Of-Noso/NosoGo/commit/50e528856ecc340f317bcaa63fce02c7f2c12065))
+- Fix not deleting the data folder - ([818640c](https://github.com/Friends-Of-Noso/NosoGo/commit/818640c16f372550c156642e5035597f4722cdbd))
+
+### ⚙️ Miscellaneous Tasks
+
+- Adding `AUTHORS` file - ([36d2f2f](https://github.com/Friends-Of-Noso/NosoGo/commit/36d2f2fcf93a8cb49a8e1e8bf516ed594fb9db3f))
+- Fixed the quotes - ([600e7b2](https://github.com/Friends-Of-Noso/NosoGo/commit/600e7b23a933741cb722924b17ef48948b49eacb))
+- Using `cut` to get the correct string - ([455b4a3](https://github.com/Friends-Of-Noso/NosoGo/commit/455b4a3ad4581ef70771d8c554bc481690f4e3fd))
+- Using proper Go version instad of `stable` - ([95c1311](https://github.com/Friends-Of-Noso/NosoGo/commit/95c131191deebd75a13516b4aad8cbbe47087ed9))
+- Only keeping `go-stable` verions - ([02b206f](https://github.com/Friends-Of-Noso/NosoGo/commit/02b206ff8b3c9db78313b8dbcb2b31518f39e543))
+- Bumping version after last release - ([98d964d](https://github.com/Friends-Of-Noso/NosoGo/commit/98d964d768f999b7a731cc625d8a8b84cd18031e))
+
+### ◀️ Revert
+
+- Not deleting anything! Windows :facepalm: - ([acd4f65](https://github.com/Friends-Of-Noso/NosoGo/commit/acd4f65ddc0c0b02f8d54aa3801a7615d693e4cd))
+
+## Contributors
+
+* [@gcarreno](https://github.com/gcarreno)
+
 ## [0.0.4](https://github.com/Friends-Of-Noso/NosoGo/compare/v0.0.3..v0.0.4) - 2025-07-07
 
 ### ⛰️  Features
