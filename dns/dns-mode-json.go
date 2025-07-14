@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
 func (dns *DNS) getDNSHandlerJSON(w http.ResponseWriter, r *http.Request) {
@@ -12,7 +13,9 @@ func (dns *DNS) getDNSHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	dns.dns.WriteJSON(w)
+	peerList := &pb.PeerList{}
+	peerList.Add(dns.peer)
+	peerList.WriteJSON(w)
 }
 
 func (dns *DNS) getSeedsHandlerJSON(w http.ResponseWriter, r *http.Request) {

@@ -20,14 +20,15 @@ const (
 
 type (
 	DNS struct {
-		ctx context.Context
-		wg  *sync.WaitGroup
+		ctx  context.Context
+		quit *chan struct{}
+		wg   *sync.WaitGroup
 		// cmd        *cobra.Command
 		server     *http.Server
 		dnsAddress string
 		dnsPort    int32
 		mode       DNSMode
-		dns        *pb.PeerList
+		peer       *pb.PeerInfo
 		seeds      *pb.PeerList
 		nodes      *pb.PeerList
 	}
@@ -35,36 +36,38 @@ type (
 
 func NewDNS(
 	ctx context.Context,
+	quit *chan struct{},
 	wg *sync.WaitGroup,
 	// cmd *cobra.Command,
+	nodePeer *pb.PeerInfo,
 	address string,
 	port int32,
-	nodeId string,
 	mode DNSMode,
 ) (*DNS, error) {
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
 	dns := &DNS{
-		ctx: ctx,
-		wg:  wg,
+		ctx:  ctx,
+		quit: quit,
+		wg:   wg,
 		// cmd:        cmd,
 		dnsAddress: address,
 		dnsPort:    port,
-		mode:       mode,
-		dns:        pb.NewPeerList(),
+		peer:       nodePeer,
 		seeds:      pb.NewPeerList(),
 		nodes:      pb.NewPeerList(),
+		mode:       mode,
 	}
 
-	dns.dns.Add(&pb.PeerInfo{
-		Address:   address,
-		Port:      port,
-		Id:        nodeId,
-		Mode:      "dns",
-		Connected: false,
-		Direction: "",
-	})
+	// dns.peer.Add(&pb.PeerInfo{
+	// 	Address:   address,
+	// 	Port:      port,
+	// 	Id:        nodeId,
+	// 	Mode:      "dns",
+	// 	Connected: false,
+	// 	Direction: "",
+	// })
 
 	dns.seeds.Add(&pb.PeerInfo{
 		Address:   "10.42.0.104", // BatchNAS
@@ -94,7 +97,7 @@ func NewDNS(
 	})
 
 	// Register routes
-	switch mode {
+	switch dns.mode {
 	case JSON:
 		mux.HandleFunc("/v1/dns", dns.getDNSHandlerJSON)
 		mux.HandleFunc("/v1/seeds", dns.getSeedsHandlerJSON)
@@ -121,7 +124,8 @@ func (dns *DNS) Start() {
 
 	log.Infof("dns server: Listening on %s", dns.dnsAddress)
 	if err := dns.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Debug("dns server crashed")
+		log.Error("ListenAndServe", err)
+		close(*dns.quit)
 	}
 }
 
@@ -133,9 +137,9 @@ func (dns *DNS) ShutDown() {
 	}
 }
 
-func (dns *DNS) GetMode() DNSMode {
-	return dns.mode
-}
+// func (dns *DNS) GetMode() DNSMode {
+// 	return dns.mode
+// }
 
 // DNS: Handle 404
 func notFoundHandler(w http.ResponseWriter, r *http.Request) {
