@@ -3,6 +3,7 @@ package store
 import (
 	"fmt"
 	"strings"
+	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -27,6 +28,7 @@ type ProtoMessage interface {
 
 // Storage represents a generic LevelDB storage
 type Storage[T ProtoMessage] struct {
+	mu     sync.RWMutex
 	db     *leveldb.DB
 	prefix string
 }
@@ -41,6 +43,9 @@ func newStorage[T ProtoMessage](db *leveldb.DB, prefix string) *Storage[T] {
 
 // Put stores a protobuf message with the given key
 func (s *Storage[T]) Put(key string, value T) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	data, err := proto.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("failed to marshal protobuf: %w", err)
@@ -52,6 +57,9 @@ func (s *Storage[T]) Put(key string, value T) error {
 
 // Get retrieves a protobuf message by key
 func (s *Storage[T]) Get(key string, value T) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	fullKey := s.prefix + key
 	data, err := s.db.Get([]byte(fullKey), nil)
 	if err != nil {
@@ -67,18 +75,27 @@ func (s *Storage[T]) Get(key string, value T) error {
 
 // Delete removes a key from storage
 func (s *Storage[T]) Delete(key string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
 	fullKey := s.prefix + key
 	return s.db.Delete([]byte(fullKey), nil)
 }
 
 // Has checks if a key exists in storage
 func (s *Storage[T]) Has(key string) (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	fullKey := s.prefix + key
 	return s.db.Has([]byte(fullKey), nil)
 }
 
 // ListKeys returns all keys with the storage prefix
 func (s *Storage[T]) ListKeys() ([]string, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	var keys []string
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
@@ -97,6 +114,9 @@ func (s *Storage[T]) ListKeys() ([]string, error) {
 
 // ListValues returns all key-value pairs with the storage prefix
 func (s *Storage[T]) ListValues(newInstance func() T) ([]T, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	var results []T
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
@@ -122,6 +142,7 @@ func (s *Storage[T]) ListValues(newInstance func() T) ([]T, error) {
 
 // Batch operations
 type Batch[T ProtoMessage] struct {
+	mu     sync.Mutex
 	batch  *leveldb.Batch
 	prefix string
 }
@@ -136,6 +157,9 @@ func (s *Storage[T]) NewBatch() *Batch[T] {
 
 // Put adds a put operation to the batch
 func (b *Batch[T]) Put(key string, value T) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	data, err := proto.Marshal(value)
 	if err != nil {
 		return fmt.Errorf("failed to marshal protobuf: %w", err)
@@ -148,12 +172,18 @@ func (b *Batch[T]) Put(key string, value T) error {
 
 // Delete adds a delete operation to the batch
 func (b *Batch[T]) Delete(key string) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	fullKey := b.prefix + key
 	b.batch.Delete([]byte(fullKey))
 }
 
 // Write executes the batch
 func (b *Batch[T]) Write(db *leveldb.DB) error {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+
 	return db.Write(b.batch, nil)
 }
 
@@ -218,6 +248,9 @@ func (sm *StorageManager) PeerKey(address string, id string) string {
 
 // Range query helpers
 func (s *Storage[T]) GetRange(startKey, endKey string, newInstance func() T) (map[string]T, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	results := make(map[string]T)
 
 	start := []byte(s.prefix + startKey)
@@ -245,6 +278,9 @@ func (s *Storage[T]) GetRange(startKey, endKey string, newInstance func() T) (ma
 
 // Count returns the number of items with the storage prefix
 func (s *Storage[T]) Count() (uint64, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	var count uint64 = 0
 
 	iter := s.db.NewIterator(util.BytesPrefix([]byte(s.prefix)), nil)
