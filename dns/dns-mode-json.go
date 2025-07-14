@@ -13,8 +13,8 @@ func (dns *DNS) getDNSHandlerJSON(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	peerList := &pb.PeerList{}
-	peerList.Add(dns.peer)
+	peerList := pb.NewPeerList()
+	peerList.Add(dns.nodePeer)
 	peerList.WriteJSON(w)
 }
 
@@ -36,4 +36,59 @@ func (dns *DNS) getNodesHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dns.nodes.WriteJSON(w)
+}
+
+func (dns *DNS) getResolveHandlerJSON(w http.ResponseWriter, r *http.Request) {
+	log.Debug("dns resolving")
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	ip := r.PathValue("ip")
+	log.Debugf("resolving for '%s'", ip)
+
+	if dns.nodePeer.Address == ip {
+		log.Debug("dns peer found")
+		found := &pb.DNSResolveResponse{
+			Success: true,
+			Peer:    dns.nodePeer,
+		}
+		found.WriteJSON(w)
+		return
+	}
+
+	seeds := dns.seeds.Peers()
+	for _, peer := range seeds {
+		if peer.Address == ip {
+			log.Debug("seed peer found")
+			found := &pb.DNSResolveResponse{
+				Success: true,
+				Peer:    peer,
+			}
+			found.WriteJSON(w)
+			return
+		}
+	}
+
+	nodes := dns.nodes.Peers()
+	for _, peer := range nodes {
+		if peer.Address == ip {
+			log.Debug("node peer found")
+			found := &pb.DNSResolveResponse{
+				Success: true,
+				Peer:    peer,
+			}
+			found.WriteJSON(w)
+			return
+		}
+	}
+
+	log.Debug("no peer found")
+	notFound := &pb.DNSResolveResponse{
+		Success: false,
+		Peer:    nil,
+	}
+
+	notFound.WriteJSON(w)
 }

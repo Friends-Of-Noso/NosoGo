@@ -83,14 +83,12 @@ message NetworkMessage {
 }
 
 // DNS
-message DNSPeerResponse {
+message DNSPeersResponse {
   repeated PeerInfo peers = 1;
 }
 
-// message DNSSeedsResponse {
-//   repeated PeerInfo seeds = 1;
-// }
+message DNSResolveResponse {
+  bool success = 1;
+  PeerInfo peer = 2;
+}
 
-// message DNSNodesResponse {
-//   repeated PeerInfo nodes = 1;
-// }

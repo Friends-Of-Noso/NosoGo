@@ -28,7 +28,7 @@ type (
 		dnsAddress string
 		dnsPort    int32
 		mode       DNSMode
-		peer       *pb.PeerInfo
+		nodePeer   *pb.PeerInfo
 		seeds      *pb.PeerList
 		nodes      *pb.PeerList
 	}
@@ -47,6 +47,8 @@ func NewDNS(
 	// Create a new ServeMux
 	mux := http.NewServeMux()
 
+	log.Debugf("nodePeer.Address: '%s'", nodePeer.Address)
+
 	dns := &DNS{
 		ctx:  ctx,
 		quit: quit,
@@ -54,25 +56,16 @@ func NewDNS(
 		// cmd:        cmd,
 		dnsAddress: address,
 		dnsPort:    port,
-		peer:       nodePeer,
+		nodePeer:   nodePeer,
 		seeds:      pb.NewPeerList(),
 		nodes:      pb.NewPeerList(),
 		mode:       mode,
 	}
 
-	// dns.peer.Add(&pb.PeerInfo{
-	// 	Address:   address,
-	// 	Port:      port,
-	// 	Id:        nodeId,
-	// 	Mode:      "dns",
-	// 	Connected: false,
-	// 	Direction: "",
-	// })
-
 	dns.seeds.Add(&pb.PeerInfo{
 		Address:   "10.42.0.104", // BatchNAS
 		Port:      8080,
-		Id:        "QmUnknown",
+		Id:        "QmUnknown1",
 		Mode:      "seed",
 		Connected: true,
 		Direction: pb.DirectionInbound,
@@ -81,16 +74,16 @@ func NewDNS(
 	dns.nodes.Add(&pb.PeerInfo{
 		Address:   "10.42.0.101", // BatchDev
 		Port:      8080,
-		Id:        "QmUnknown",
+		Id:        "QmUnknown2",
 		Mode:      "node",
 		Connected: true,
 		Direction: pb.DirectionInbound,
 	})
 
 	dns.nodes.Add(&pb.PeerInfo{
-		Address:   "10.42.0.102", // BatchDev
+		Address:   "10.42.0.102", // BatchDesk
 		Port:      8080,
-		Id:        "QmUnknown",
+		Id:        "QmUnknown3",
 		Mode:      "node",
 		Connected: true,
 		Direction: pb.DirectionInbound,
@@ -102,10 +95,12 @@ func NewDNS(
 		mux.HandleFunc("/v1/dns", dns.getDNSHandlerJSON)
 		mux.HandleFunc("/v1/seeds", dns.getSeedsHandlerJSON)
 		mux.HandleFunc("/v1/nodes", dns.getNodesHandlerJSON)
+		mux.HandleFunc("/v1/resolve/{ip}", dns.getResolveHandlerJSON)
 	case PROTOBUF:
 		mux.HandleFunc("/v1/dns", dns.getDNSHandlerProtoBuf)
 		mux.HandleFunc("/v1/seeds", dns.getSeedsHandlerProtoBuf)
 		mux.HandleFunc("/v1/nodes", dns.getNodesHandlerProtoBuf)
+		mux.HandleFunc("/v1/resolve/{ip}", dns.getResolveHandlerProtoBuf)
 	}
 	mux.HandleFunc("/", notFoundHandler)
 

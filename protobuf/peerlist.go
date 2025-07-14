@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 	"sync"
 
+	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	"google.golang.org/protobuf/proto"
 )
 
@@ -38,6 +39,7 @@ func (pl *PeerList) Add(peer *PeerInfo) {
 	pl.mu.Lock()
 	defer pl.mu.Unlock()
 
+	log.Debugf("peer: '%v'", peer)
 	pl.peers[peer.Id] = peer
 }
 
@@ -91,18 +93,26 @@ func (pl *PeerList) Peers() map[string]*PeerInfo {
 
 // Helper to write JSON response
 func (pl *PeerList) WriteJSON(w http.ResponseWriter) {
+	pl.mu.RLock()
+	defer pl.mu.RUnlock()
+
+	msg := &DNSPeersResponse{}
+
+	for _, peer := range pl.peers {
+		msg.Peers = append(msg.Peers, peer)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(pl.peers); err != nil {
+	if err := json.NewEncoder(w).Encode(msg); err != nil {
 		http.Error(w, "failed to encode to JSON", http.StatusInternalServerError)
 	}
 }
 
 // Helper to write ProtoBuf response
 func (pl *PeerList) WriteProtobuf(w http.ResponseWriter) {
-	pl.mu.Lock()
-	defer pl.mu.Unlock()
+	pl.mu.RLock()
+	defer pl.mu.RUnlock()
 
-	msg := &DNSPeerResponse{}
+	msg := &DNSPeersResponse{}
 
 	for _, peer := range pl.peers {
 		msg.Peers = append(msg.Peers, peer)
