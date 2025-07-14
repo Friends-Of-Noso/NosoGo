@@ -70,7 +70,6 @@ func fetchIP(ctx context.Context, svc Service, preferV6 bool, retries int) (stri
 	for i := 0; i <= retries; i++ {
 		req, err := http.NewRequestWithContext(ctx, "GET", svc.URL, nil)
 		if err != nil {
-			log.Error("http.NewRequestWithContext()", err)
 			return "", svc.Name, err
 		}
 
@@ -78,13 +77,17 @@ func fetchIP(ctx context.Context, svc Service, preferV6 bool, retries int) (stri
 
 		resp, err := client.Do(req)
 		if err != nil {
-			log.Error("client.Do()", err)
+			log.Warnf("Error fetching IP - Try %d of %d: %v", i+1, retries, err)
 			lastErr = err
 			time.Sleep(time.Duration(i+1) * 500 * time.Millisecond)
 			continue
 		}
 		defer resp.Body.Close()
-		body, _ := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			log.Error("io.ReadAll", err)
+			return "", svc.Name, err
+		}
 
 		if svc.IsJSON {
 			var result map[string]interface{}
