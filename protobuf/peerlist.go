@@ -3,6 +3,7 @@ package protobuf
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"net/http"
 	reflect "reflect"
 	"sync"
@@ -74,11 +75,8 @@ func (pl *PeerList) Peers() map[string]*PeerInfo {
 	defer pl.mu.RUnlock()
 
 	// Shallow copy — safe because PeerInfo pointers are stable
-	copied := make(map[string]*PeerInfo, len(pl.peers))
-	for id, peer := range pl.peers {
-		copied[id] = peer
-	}
-	return copied
+	clone := maps.Clone(pl.peers)
+	return clone
 }
 
 // func (pl *PeerList) Peers() iter.Seq2[string, *PeerInfo] {
