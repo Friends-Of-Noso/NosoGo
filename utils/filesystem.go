@@ -10,7 +10,7 @@ func EnsureDir(dir string, mode os.FileMode) error {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err := os.MkdirAll(dir, mode)
 		if err != nil {
-			return fmt.Errorf("could not create directory %v. %v", dir, err)
+			return fmt.Errorf("could not create directory '%s'. %w", dir, err)
 		}
 	}
 	return nil
@@ -28,7 +28,7 @@ func WriteFile(filePath string, contents []byte, mode os.FileMode) error {
 func MustWriteFile(filePath string, contents []byte, mode os.FileMode) error {
 	err := WriteFile(filePath, contents, mode)
 	if err != nil {
-		return fmt.Errorf("function MustWriteFile failed: %v", err)
+		return fmt.Errorf("function MustWriteFile failed: %w", err)
 	}
 	return nil
 }
