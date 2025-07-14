@@ -80,7 +80,7 @@ func Print(msg string) {
 	logger.Print(msg)
 }
 
-func Printf(msg string, v ...interface{}) {
+func Printf(msg string, v ...any) {
 	logger.Printf(msg, v...)
 }
 
@@ -92,7 +92,7 @@ func Info(msg string) {
 	logger.Info().Msg(msg)
 }
 
-func Infof(format string, v ...interface{}) {
+func Infof(format string, v ...any) {
 	logger.Info().Msgf(format, v...)
 }
 
@@ -100,7 +100,7 @@ func Warn(msg string) {
 	logger.Warn().Msg(msg)
 }
 
-func Warnf(format string, v ...interface{}) {
+func Warnf(format string, v ...any) {
 	logger.Warn().Msgf(format, v...)
 }
 
@@ -112,7 +112,7 @@ func Error(msg string, err error) {
 	}
 }
 
-func Errorf(format string, err error, v ...interface{}) {
+func Errorf(format string, err error, v ...any) {
 	if err == nil {
 		logger.Error().Msgf(format, v...)
 	} else {
@@ -124,7 +124,7 @@ func Fatal(msg string) {
 	logger.Fatal().Msg(msg)
 }
 
-func Fatalf(format string, v ...interface{}) {
+func Fatalf(format string, v ...any) {
 	logger.Fatal().Msgf(format, v...)
 }
 
@@ -132,6 +132,6 @@ func Debug(msg string) {
 	logger.Debug().Msg(msg)
 }
 
-func Debugf(format string, v ...interface{}) {
+func Debugf(format string, v ...any) {
 	logger.Debug().Msgf(format, v...)
 }
