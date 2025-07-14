@@ -8,7 +8,7 @@ import (
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
 
-func TestBlocksSetHash(t *testing.T) {
+func TestBlockSetHash(t *testing.T) {
 	block := &pb.Block{
 		Height:       1,
 		PreviousHash: "BPreviousHash",
