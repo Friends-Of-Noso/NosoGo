@@ -40,7 +40,7 @@ func (n *Node) runModeDNS() {
 	err := checkPort(n.dnsPort, cDNSPortFlag, cfg.DefaultDNSPort)
 	if err != nil {
 		log.Error("error checking port", err)
-		n.Shutdown()
+		close(*n.quit)
 		return
 	}
 
@@ -57,19 +57,19 @@ func (n *Node) runModeDNS() {
 	n.peer.Mode = "dns"
 	log.Debugf("peer Mode: %s", n.peer.Mode)
 
-	nodeID := n.p2pHost.ID().String()
 	dnsServer, err := dns.NewDNS(
 		n.ctx,
+		n.quit,
 		n.wg,
 		// n.cmd,
+		n.peer,
 		n.dnsAddress,
 		n.dnsPort,
-		nodeID,
 		dns.JSON,
 	)
 	if err != nil {
 		log.Error("could not create DNS server", err)
-		n.Shutdown()
+		close(*n.quit)
 		return
 	}
 

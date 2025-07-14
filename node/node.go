@@ -216,7 +216,7 @@ func (n *Node) Start() {
 
 	if err := n.startUp(); err != nil {
 		log.Errorf("failed calling startUp", err)
-		n.Shutdown()
+		close(*n.quit)
 		return
 	}
 
@@ -236,10 +236,6 @@ func (n *Node) Start() {
 func (n *Node) Shutdown() {
 	log.Info("node shutting down...")
 
-	// Call the Context cancel function
-	// n.cancel()
-	close(*n.quit)
-
 	// See if there's custom  cleanup for each mode
 	switch n.peer.Mode {
 	case cfg.NodeModeDNS:
@@ -251,10 +247,6 @@ func (n *Node) Shutdown() {
 	case cfg.NodeModeNode:
 		n.shutdownNode()
 	}
-
-	// Wait for all goroutines to finish
-	// log.Info("waiting for threads to finish...")
-	// n.wg.Wait()
 
 	// Close the database
 	log.Info("closing database...")
@@ -416,7 +408,7 @@ func (n *Node) reScanBlockChain() error {
 		// ????????????????????????
 		// if err := n.loadStatus(); err != nil {
 		// 	log.Error("reScanBlockChain.loadStatus", err)
-		// 	n.Shutdown()
+		// 	close(*n.quit)
 		// 	return err
 		// }
 
@@ -425,7 +417,7 @@ func (n *Node) reScanBlockChain() error {
 
 		if err := n.saveStatus(); err != nil {
 			log.Error("reScanBlockChain.saveStatus", err)
-			n.Shutdown()
+			close(*n.quit)
 			return err
 		}
 

@@ -225,6 +225,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Block here until we receive a termination signal
 	select {
 	case sig := <-sigChan:
+		defer close(quit)
 		// Print a new line after the "^C" or "^\"
 		if sig == syscall.SIGINT || sig == syscall.SIGQUIT || sig == syscall.SIGKILL {
 			fmt.Println()
@@ -234,6 +235,7 @@ func runNode(cmd *cobra.Command, args []string) {
 		node.Shutdown()
 	case <-quit:
 		log.Debugf("received internal shutdown")
+		node.Shutdown()
 	}
 
 	// cancel

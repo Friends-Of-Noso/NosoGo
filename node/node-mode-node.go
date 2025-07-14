@@ -49,7 +49,7 @@ func (n *Node) runModeNode() {
 	blockTopic, err := n.pubSub.Join(BLOCKS_SUB)
 	if err != nil {
 		log.Error("failed to join blocks topic", err)
-		n.Shutdown()
+		close(*n.quit)
 		return
 	}
 	n.topics[BLOCKS_SUB] = blockTopic
@@ -58,7 +58,7 @@ func (n *Node) runModeNode() {
 	blockSub, err := blockTopic.Subscribe()
 	if err != nil {
 		log.Error("failed to subscribe to blocks topic", err)
-		n.Shutdown()
+		close(*n.quit)
 		return
 	}
 
