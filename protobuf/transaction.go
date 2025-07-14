@@ -16,7 +16,7 @@ func NewTransaction(
 		BlockHeight: height,
 	}
 	if err := transaction.SetHash(); err != nil {
-		return nil, fmt.Errorf("error creating new transaction: %v", err)
+		return nil, fmt.Errorf("error creating new transaction: %w", err)
 	}
 	return transaction, nil
 }
@@ -37,7 +37,7 @@ func (t *Transaction) SetHash() error {
 	h := crypto.SHA256.New()
 	_, err := h.Write([]byte(value))
 	if err != nil {
-		return fmt.Errorf("error writing to SHA256: %v", err)
+		return fmt.Errorf("error writing to SHA256: %w", err)
 	}
 	t.Hash = "T" + strings.ToUpper(hex.EncodeToString(h.Sum([]byte(salt))))
 	return nil

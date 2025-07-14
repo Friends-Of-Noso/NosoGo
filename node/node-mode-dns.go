@@ -1,12 +1,12 @@
 package node
 
 import (
-	"fmt"
 	"strings"
 
 	cfg "github.com/Friends-Of-Noso/NosoGo/config"
 	"github.com/Friends-Of-Noso/NosoGo/dns"
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
+	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 const (
@@ -19,15 +19,15 @@ var (
 
 func (n *Node) runModeDNS() {
 	log.Debug("entering runModeDNS")
-	log.Debugf("node ID: %s", n.p2pHost.ID())
 
+	log.Debug("Finding a non local IP/Address")
 	for key, value := range n.p2pHost.Addrs() {
-		log.Debugf("address: %d, %s", key, value)
-		address = fmt.Sprintf("%s", value)
+		log.Debugf("  address: %d, %s", key, value)
+		address = value.String()
 		if !strings.Contains(address, "127.0.0.1") && !strings.Contains(address, "localhost") {
-			log.Debugf("found a good one: '%s'", address)
+			log.Debugf("  found a good one: '%s'", address)
 			splitN := strings.Split(address, "/")
-			log.Debugf("splitN[2]: '%v'", splitN[2])
+			log.Debugf("  splitN[2]: '%v'", splitN[2])
 			address = splitN[2]
 		}
 	}
@@ -44,15 +44,26 @@ func (n *Node) runModeDNS() {
 		return
 	}
 
-	nodeID := fmt.Sprintf("%s", n.p2pHost.ID())
+	log.Debugf("peer Address: %s", n.peer.Address)
+
+	// TODO: This must call with ipv6==true in production
+	if publicAddress := utils.GetMyIP(n.ctx, false); publicAddress != "" {
+		n.peer.Address = publicAddress
+	}
+	log.Debugf("peer Public Address: %s", n.peer.Address)
+	log.Debugf("peer Port: %d", n.peer.Port)
+	log.Debugf("peer ID: %s", n.peer.Id)
+
+	n.peer.Mode = "dns"
+	log.Debugf("peer Mode: %s", n.peer.Mode)
+
+	nodeID := n.p2pHost.ID().String()
 	dnsServer, err := dns.NewDNS(
 		n.ctx,
 		n.wg,
-		n.cmd,
+		// n.cmd,
 		n.dnsAddress,
 		n.dnsPort,
-		n.address,
-		n.port,
 		nodeID,
 		dns.JSON,
 	)

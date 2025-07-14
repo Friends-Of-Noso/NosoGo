@@ -5,9 +5,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/multiformats/go-multiaddr"
-	"github.com/spf13/cobra"
-
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 )
@@ -23,30 +20,25 @@ const (
 
 type (
 	DNS struct {
-		ctx         context.Context
-		wg          *sync.WaitGroup
-		cmd         *cobra.Command
-		server      *http.Server
-		dnsAddress  string
-		dnsPort     int
-		mode        DNSMode
-		nodeAddress multiaddr.Multiaddr
-		nodePort    int
-		nodeId      string
-		dns         *pb.PeerList
-		seeds       *pb.PeerList
-		nodes       *pb.PeerList
+		ctx context.Context
+		wg  *sync.WaitGroup
+		// cmd        *cobra.Command
+		server     *http.Server
+		dnsAddress string
+		dnsPort    int32
+		mode       DNSMode
+		dns        *pb.PeerList
+		seeds      *pb.PeerList
+		nodes      *pb.PeerList
 	}
 )
 
 func NewDNS(
 	ctx context.Context,
 	wg *sync.WaitGroup,
-	cmd *cobra.Command,
+	// cmd *cobra.Command,
 	address string,
-	port int,
-	nodeAddress multiaddr.Multiaddr,
-	nodePort int,
+	port int32,
 	nodeId string,
 	mode DNSMode,
 ) (*DNS, error) {
@@ -54,46 +46,51 @@ func NewDNS(
 	mux := http.NewServeMux()
 
 	dns := &DNS{
-		ctx:         ctx,
-		wg:          wg,
-		cmd:         cmd,
-		dnsAddress:  address,
-		dnsPort:     port,
-		nodeAddress: nodeAddress,
-		nodePort:    nodePort,
-		nodeId:      nodeId,
-		mode:        mode,
-		dns:         pb.NewPeerList(pb.DNS),
-		seeds:       pb.NewPeerList(pb.SEEDS),
-		nodes:       pb.NewPeerList(pb.NODES),
+		ctx: ctx,
+		wg:  wg,
+		// cmd:        cmd,
+		dnsAddress: address,
+		dnsPort:    port,
+		mode:       mode,
+		dns:        pb.NewPeerList(),
+		seeds:      pb.NewPeerList(),
+		nodes:      pb.NewPeerList(),
 	}
 
-	dns.dns.Put(&pb.PeerInfo{
-		Address: address,
-		Port:    int32(port),
-		Id:      nodeId,
-		Mode:    "dns",
+	dns.dns.Add(&pb.PeerInfo{
+		Address:   address,
+		Port:      port,
+		Id:        nodeId,
+		Mode:      "dns",
+		Connected: false,
+		Direction: "",
 	})
 
-	dns.seeds.Put(&pb.PeerInfo{
-		Address: "10.42.0.104", // BatchNAS
-		Port:    8080,
-		Id:      "QmUnknown",
-		Mode:    "seed",
+	dns.seeds.Add(&pb.PeerInfo{
+		Address:   "10.42.0.104", // BatchNAS
+		Port:      8080,
+		Id:        "QmUnknown",
+		Mode:      "seed",
+		Connected: true,
+		Direction: pb.DirectionInbound,
 	})
 
-	dns.nodes.Put(&pb.PeerInfo{
-		Address: "10.42.0.101", // BatchDev
-		Port:    8080,
-		Id:      "QmUnknown",
-		Mode:    "node",
+	dns.nodes.Add(&pb.PeerInfo{
+		Address:   "10.42.0.101", // BatchDev
+		Port:      8080,
+		Id:        "QmUnknown",
+		Mode:      "node",
+		Connected: true,
+		Direction: pb.DirectionInbound,
 	})
 
-	dns.nodes.Put(&pb.PeerInfo{
-		Address: "10.42.0.102", // BatchDev
-		Port:    8080,
-		Id:      "QmUnknown",
-		Mode:    "node",
+	dns.nodes.Add(&pb.PeerInfo{
+		Address:   "10.42.0.102", // BatchDev
+		Port:      8080,
+		Id:        "QmUnknown",
+		Mode:      "node",
+		Connected: true,
+		Direction: pb.DirectionInbound,
 	})
 
 	// Register routes

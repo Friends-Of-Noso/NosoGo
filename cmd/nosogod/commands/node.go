@@ -3,13 +3,11 @@ package commands
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
 
-	"github.com/multiformats/go-multiaddr"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -78,11 +76,11 @@ func init() {
 	// and all subcommands, e.g.:
 	// nodeCmd.PersistentFlags().String("foo", "", "A help for foo")
 
-	nodeCmd.Flags().StringVarP(&cfgFile, cConfigFlag, "c", "", "config file (default is '"+config.GetConfigFile()+"')")
-	if err := viper.BindPFlag(cConfigFlag, nodeCmd.Flags().Lookup(cConfigFlag)); err != nil {
-		fmt.Fprintf(os.Stderr, "error binding flag '%s': %v", cConfigFlag, err)
-		os.Exit(1)
-	}
+	nodeCmd.Flags().StringVarP(&cfgFile, cConfigFlag, "c", config.GetConfigFile(), "config file")
+	// if err := viper.BindPFlag(cConfigFlag, nodeCmd.Flags().Lookup(cConfigFlag)); err != nil {
+	// 	fmt.Fprintf(os.Stderr, "error binding flag '%s': %v", cConfigFlag, err)
+	// 	os.Exit(1)
+	// }
 
 	logLevelHelp := fmt.Sprintf(
 		// "log level: '%s', '%s', '%s', '%s'",
@@ -116,7 +114,7 @@ func init() {
 	nodeCmd.Flags().String(cNodeAddressFlag, config.Node.Address, "node address")
 	viper.BindPFlag(cNodeAddress, nodeCmd.Flags().Lookup(cNodeAddressFlag))
 
-	nodeCmd.Flags().Int(cNodePortFlag, config.Node.Port, "node port")
+	nodeCmd.Flags().Int32(cNodePortFlag, config.Node.Port, "node port")
 	viper.BindPFlag(cNodePort, nodeCmd.Flags().Lookup(cNodePortFlag))
 
 	modeHelp := fmt.Sprintf("node mode: '%s', '%s', '%s', '%s'", cfg.NodeModeDNS, cfg.NodeModeSeed, cfg.NodeModeSuperNode, cfg.NodeModeNode)
@@ -135,7 +133,7 @@ func init() {
 	nodeCmd.Flags().String(cDNSAddressFlag, config.DNS.Address, "dns address")
 	viper.BindPFlag(cDNSAddressFlag, nodeCmd.Flags().Lookup(cDNSAddressFlag))
 
-	nodeCmd.Flags().Int(cDNSPortFlag, config.DNS.Port, "dns port")
+	nodeCmd.Flags().Int32(cDNSPortFlag, config.DNS.Port, "dns port")
 	viper.BindPFlag(cDNSPortFlag, nodeCmd.Flags().Lookup(cDNSPortFlag))
 
 	nodeCmd.Flags().StringVarP(&seed, "seed", "s", "", "seed to connect")
@@ -178,12 +176,12 @@ func runNode(cmd *cobra.Command, args []string) {
 
 	nodeAddressConfig := getFlagString(cmd, cNodeAddressFlag)
 	log.Debugf("nodeAddress: %s", nodeAddressConfig)
-	nodePortConfig := getFlagInt(cmd, cNodePortFlag)
+	nodePortConfig := getFlagInt32(cmd, cNodePortFlag)
 	log.Debugf("nodePort: %d", nodePortConfig)
-	nodeAddress, err := resolveToMultiaddr(nodeAddressConfig, nodePortConfig)
-	if err != nil {
-		log.Fatalf("unable to resolve to multiaddr: %v", err)
-	}
+	// nodeAddress, err := resolveToMultiaddr(nodeAddressConfig, nodePortConfig)
+	// if err != nil {
+	// 	log.Fatalf("unable to resolve to multiaddr: %v", err)
+	// }
 	nodeMode := getFlagString(cmd, cNodeModeFlag)
 	log.Debugf("nodeMode: %s", nodeMode)
 
@@ -195,19 +193,19 @@ func runNode(cmd *cobra.Command, args []string) {
 
 	dnsAddressConfig := getFlagString(cmd, cDNSAddressFlag)
 	log.Debugf("dnsAddrs: %s", dnsAddressConfig)
-	dnsPortConfig := getFlagInt(cmd, cDNSPortFlag)
+	dnsPortConfig := getFlagInt32(cmd, cDNSPortFlag)
 	log.Debugf("dnsPort: %d", dnsPortConfig)
-	dnsAddress, err := resolveToString(dnsAddressConfig, dnsPortConfig)
+	dnsAddress, err := utils.ResolveToString(dnsAddressConfig, dnsPortConfig)
 	if err != nil {
 		log.Fatalf("could not resolve to string: %v", err)
 	}
 
 	node, err := node.NewNode(
+		// cmd,
 		ctx,
 		&quit,
 		&wg,
-		cmd,
-		nodeAddress,
+		nodeAddressConfig,
 		nodePortConfig,
 		privKey,
 		pubKey,
@@ -246,11 +244,13 @@ func runNode(cmd *cobra.Command, args []string) {
 
 func nodeInitConfigAndLogs(cmd *cobra.Command) {
 	if cfgFile != "" && !utils.FileExists(cfgFile) {
+		// TODO: Output usage
 		fmt.Fprintf(os.Stderr, "could not find config file '%s'\n", cfgFile)
 		os.Exit(1)
 	}
 
 	if cfgFile == "" && !utils.FileExists(config.GetConfigFile()) {
+		// TODO: Output usage
 		fmt.Fprintf(os.Stderr, "could not find config file '%s'\n", config.GetConfigFile())
 		os.Exit(1)
 	}
@@ -274,7 +274,7 @@ func nodeInitConfigAndLogs(cmd *cobra.Command) {
 		fmt.Printf("viper could not read config: %v\n", err)
 		os.Exit(1)
 	}
-	viper.AutomaticEnv() // read in environment variables that match
+	//viper.AutomaticEnv() // read in environment variables that match
 
 	if !cfg.ValidLogLevels[config.LogLevel] {
 		fmt.Printf("\nError: wrong log level: '%s'.\nPlease check your config file or the usage below.\n", config.LogLevel)
@@ -303,56 +303,26 @@ func getFlagInt(cmd *cobra.Command, flag string) int {
 	return flagValue
 }
 
-func getFlagString(cmd *cobra.Command, flag string) string {
-	flagValue, err := cmd.Flags().GetString(flag)
+func getFlagInt32(cmd *cobra.Command, flag string) int32 {
+	flagValue, err := cmd.Flags().GetInt32(flag)
 	if err != nil {
 		log.Fatalf("cannot retrieve flag '%s': %v", flag, err)
 	}
 	return flagValue
 }
 
-func resolveToMultiaddr(address string, port int) (multiaddr.Multiaddr, error) {
-	ips, err := net.LookupIP(address)
-	if err != nil || len(ips) == 0 {
-		return nil, fmt.Errorf("failed to resolve address %s: %v", address, err)
+func getFlagInt64(cmd *cobra.Command, flag string) int64 {
+	flagValue, err := cmd.Flags().GetInt64(flag)
+	if err != nil {
+		log.Fatalf("cannot retrieve flag '%s': %v", flag, err)
 	}
-
-	// Try to pick the first IPv4 (if any)
-	var ip net.IP
-	for _, candidate := range ips {
-		if candidate.To4() != nil {
-			ip = candidate
-			break
-		}
-	}
-
-	if ip == nil {
-		return nil, fmt.Errorf("no IPv4 address found for %s", address)
-	}
-
-	// Now build the multiaddr using the resolved IP
-	return multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%d", ip.String(), port))
+	return flagValue
 }
 
-func resolveToString(address string, port int) (string, error) {
-	ips, err := net.LookupIP(address)
-	if err != nil || len(ips) == 0 {
-		return "", fmt.Errorf("failed to resolve address %s: %v", address, err)
+func getFlagString(cmd *cobra.Command, flag string) string {
+	flagValue, err := cmd.Flags().GetString(flag)
+	if err != nil {
+		log.Fatalf("cannot retrieve flag '%s': %v", flag, err)
 	}
-
-	// Try to pick the first IPv4 (if any)
-	var ip net.IP
-	for _, candidate := range ips {
-		if candidate.To4() != nil {
-			ip = candidate
-			break
-		}
-	}
-
-	if ip == nil {
-		return "", fmt.Errorf("no IPv4 address found for %s", address)
-	}
-
-	// Now build the multiaddr using the resolved IP
-	return fmt.Sprintf("%s:%d", ip.String(), port), nil
+	return flagValue
 }

@@ -3,50 +3,93 @@ package protobuf
 import (
 	"encoding/json"
 	"fmt"
-	"iter"
 	"net/http"
 	reflect "reflect"
+	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
 
-type PeerListType int
-
+// Peer direction constants
 const (
-	DNS PeerListType = iota
-	SEEDS
-	NODES
+	DirectionOutbound = "OUTBOUND"
+	DirectionInbound  = "INBOUND"
 )
 
 type PeerList struct {
-	peerType PeerListType
-	peers    []*PeerInfo
+	mu    sync.RWMutex
+	peers map[string]*PeerInfo
 }
 
-func NewPeerList(plt PeerListType) *PeerList {
+// NewPeerList constructs a new PeerList
+func NewPeerList() *PeerList {
 	return &PeerList{
-		peerType: plt,
-		peers:    []*PeerInfo{},
+		peers: make(map[string]*PeerInfo),
 	}
 }
 
-func (pl *PeerList) Get(index int) *PeerInfo {
-	return pl.peers[index]
+// Add inserts or replaces a peer in the list
+func (pl *PeerList) Add(peer *PeerInfo) {
+	if peer == nil || peer.Id == "" {
+		return
+	}
+
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+
+	pl.peers[peer.Id] = peer
 }
 
-func (pl *PeerList) Put(peer *PeerInfo) {
-	pl.peers = append(pl.peers, peer)
+// Remove deletes a peer by its ID
+func (pl *PeerList) Remove(id string) {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+
+	delete(pl.peers, id)
 }
 
-func (pl *PeerList) Peers() iter.Seq2[int, *PeerInfo] {
-	return func(yield func(int, *PeerInfo) bool) {
-		for k, v := range pl.peers {
-			if !yield(k, v) {
-				return
-			}
-		}
+// Connected returns true if the peer with given ID is connected
+func (pl *PeerList) Connected(id string) bool {
+	pl.mu.RLock()
+	defer pl.mu.RUnlock()
+
+	peer, ok := pl.peers[id]
+	return ok && peer.Connected
+}
+
+// Disconnect marks a peer as disconnected and clears its direction
+func (pl *PeerList) Disconnect(id string) {
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+
+	if peer, ok := pl.peers[id]; ok {
+		peer.Connected = false
+		peer.Direction = ""
 	}
 }
+
+// Peers returns a snapshot map of all peers
+func (pl *PeerList) Peers() map[string]*PeerInfo {
+	pl.mu.RLock()
+	defer pl.mu.RUnlock()
+
+	// Shallow copy — safe because PeerInfo pointers are stable
+	copied := make(map[string]*PeerInfo, len(pl.peers))
+	for id, peer := range pl.peers {
+		copied[id] = peer
+	}
+	return copied
+}
+
+// func (pl *PeerList) Peers() iter.Seq2[string, *PeerInfo] {
+// 	return func(yield func(string, *PeerInfo) bool) {
+// 		for k, v := range pl.peers {
+// 			if !yield(k, v) {
+// 				return
+// 			}
+// 		}
+// 	}
+// }
 
 // Helper to write JSON response
 func (pl *PeerList) WriteJSON(w http.ResponseWriter) {
@@ -58,43 +101,21 @@ func (pl *PeerList) WriteJSON(w http.ResponseWriter) {
 
 // Helper to write ProtoBuf response
 func (pl *PeerList) WriteProtobuf(w http.ResponseWriter) {
-	var msgDNS *DNSPeerResponse
-	var msgSeeds *DNSSeedsResponse
-	var msgNodes *DNSNodesResponse
-	var msgType reflect.Type
-	switch pl.peerType {
-	case DNS:
-		msgDNS = &DNSPeerResponse{
-			Dns: pl.peers,
-		}
-		// Determine the message name
-		msgType = reflect.TypeOf(msgSeeds).Elem()
-	case SEEDS:
-		msgSeeds = &DNSSeedsResponse{
-			Seeds: pl.peers,
-		}
-		// Determine the message name
-		msgType = reflect.TypeOf(msgSeeds).Elem()
-	case NODES:
-		msgNodes = &DNSNodesResponse{
-			Nodes: pl.peers,
-		}
-		// Determine the message name
-		msgType = reflect.TypeOf(msgNodes).Elem()
+	pl.mu.Lock()
+	defer pl.mu.Unlock()
+
+	msg := &DNSPeerResponse{}
+
+	for _, peer := range pl.peers {
+		msg.Peers = append(msg.Peers, peer)
 	}
+
+	msgType := reflect.TypeOf(msg).Elem()
+
 	protoMime := fmt.Sprintf("application/x-protobuf; proto=%s.%s", msgType.PkgPath(), msgType.Name())
 	w.Header().Set("Content-Type", protoMime)
 	w.Header().Set("X-Content-Type-Options", "nosniff")
-	var data []byte
-	var err error
-	switch pl.peerType {
-	case DNS:
-		data, err = proto.Marshal(msgDNS)
-	case SEEDS:
-		data, err = proto.Marshal(msgSeeds)
-	case NODES:
-		data, err = proto.Marshal(msgNodes)
-	}
+	data, err := proto.Marshal(msg)
 	if err != nil {
 		http.Error(w, "failed to marshal protobuf", http.StatusInternalServerError)
 		return

@@ -116,7 +116,7 @@ func (c *Config) GetDatabasePath() string {
 func homeFolder() string {
 	home, err := os.UserHomeDir()
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "could not find homedir: %v", err)
+		fmt.Fprintf(os.Stderr, "could not find homedir: %v\n", err)
 		os.Exit(1)
 	}
 
@@ -129,7 +129,7 @@ func (c *Config) WriteConfig() error {
 	ms.Decode(c, &outMap)
 	b, err := toml.Marshal(outMap)
 	if err != nil {
-		return fmt.Errorf("could not marshal config structure: %v", err)
+		return fmt.Errorf("could not marshal config structure: %w", err)
 	}
 	if err := utils.MustWriteFile(c.GetConfigFile(), b, 0644); err != nil {
 		return err
@@ -175,7 +175,7 @@ func DefaultAPIConfig() *APIConfig {
 
 type NodeConfig struct {
 	Address    string `mapstructure:"address"`
-	Port       int    `mapstructure:"port"`
+	Port       int32  `mapstructure:"port"`
 	Mode       string `mapstructure:"mode"`
 	PrivateKey string `mapstructure:"private-key"`
 	PublicKey  string `mapstructure:"public-key"`
@@ -193,7 +193,7 @@ func DefaultNodeConfig() *NodeConfig {
 
 type DNSConfig struct {
 	Address string `mapstructure:"address"`
-	Port    int    `mapstructure:"port"`
+	Port    int32  `mapstructure:"port"`
 }
 
 func DefaultDNSConfig() *DNSConfig {

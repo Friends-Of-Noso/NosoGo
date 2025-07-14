@@ -8,7 +8,7 @@ import (
 
 // Checks for privileges of the user running the application.
 // If ran under Linux/Darwin and port < 1024, user has to be root
-func checkPort(port int, flag string, defaultPort int) error {
+func checkPort(port int32, flag string, defaultPort int) error {
 	goos := runtime.GOOS
 
 	if goos == "linux" || goos == "darwin" {

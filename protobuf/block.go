@@ -28,7 +28,7 @@ func NewBlock(
 		Height: height,
 	}
 	if err := block.SetHash(); err != nil {
-		return nil, fmt.Errorf("error creating new block: %v", err)
+		return nil, fmt.Errorf("error creating new block: %w", err)
 	}
 	return block, nil
 }
@@ -50,7 +50,7 @@ func (b *Block) SetHash() error {
 	h := crypto.SHA256.New()
 	_, err := h.Write([]byte(value))
 	if err != nil {
-		return fmt.Errorf("error writing to SHA256: %v", err)
+		return fmt.Errorf("error writing to SHA256: %w", err)
 	}
 	b.Hash = "B" + strings.ToUpper(hex.EncodeToString(h.Sum([]byte(salt))))
 	return nil

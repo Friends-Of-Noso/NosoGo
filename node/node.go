@@ -12,9 +12,6 @@ import (
 	pubsub "github.com/libp2p/go-libp2p-pubsub"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
-	"github.com/libp2p/go-libp2p/core/peer"
-	"github.com/multiformats/go-multiaddr"
-	"github.com/spf13/cobra"
 	"github.com/syndtr/goleveldb/leveldb"
 	"google.golang.org/protobuf/proto"
 
@@ -23,6 +20,7 @@ import (
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
 	pb "github.com/Friends-Of-Noso/NosoGo/protobuf"
 	"github.com/Friends-Of-Noso/NosoGo/store"
+	"github.com/Friends-Of-Noso/NosoGo/utils"
 )
 
 const (
@@ -30,47 +28,46 @@ const (
 )
 
 type Node struct {
-	cmd *cobra.Command
-	ctx context.Context
-	// cancel             context.CancelFunc
-	quit               *chan struct{}
-	wg                 *sync.WaitGroup
-	address            multiaddr.Multiaddr
-	port               int
-	mode               string
-	p2pHost            host.Host
-	pubSub             *pubsub.PubSub
-	topics             PubSubTopics
-	subscriptions      PubSubSubscription
-	privateKey         crypto.PrivKey
-	publicKey          crypto.PubKey
-	sm                 *store.StorageManager
-	peers              []peer.AddrInfo
-	dns                *dns.DNS
-	dnsAddress         string
-	dnsPort            int
-	statusStorage      *store.Storage[*pb.Status]
-	blockStorage       *store.Storage[*pb.Block]
-	transactionStorage *store.Storage[*pb.Transaction]
-	peerInfoStorage    *store.Storage[*pb.PeerInfo]
-	status             *pb.Status
-	seed               string // This needs to go away
+	// cmd                   *cobra.Command
+	ctx                   context.Context
+	quit                  *chan struct{}
+	wg                    *sync.WaitGroup
+	peer                  *pb.PeerInfo
+	p2pHost               host.Host
+	pubSub                *pubsub.PubSub
+	topics                PubSubTopics
+	subscriptions         PubSubSubscription
+	privateKey            crypto.PrivKey
+	publicKey             crypto.PubKey
+	sm                    *store.StorageManager
+	dnsPeers              *pb.PeerList
+	seedPeers             *pb.PeerList
+	nodePeers             *pb.PeerList
+	dns                   *dns.DNS
+	dnsAddress            string
+	dnsPort               int32
+	statusStorage         *store.Storage[*pb.Status]
+	blockStorage          *store.Storage[*pb.Block]
+	transactionStorage    *store.Storage[*pb.Transaction]
+	bannedPeerInfoStorage *store.Storage[*pb.PeerInfo]
+	status                *pb.Status
+	seed                  string // This needs to go away
 	// dht           *dht.IpfsDHT
 }
 
 func NewNode(
+	// cmd *cobra.Command,
 	ctx context.Context,
 	// cancel context.CancelFunc,
 	quit *chan struct{},
 	wg *sync.WaitGroup,
-	cmd *cobra.Command,
-	address multiaddr.Multiaddr,
-	port int,
+	address string,
+	port int32,
 	privKey string,
 	pubKey string,
 	mode string,
 	dnsAddress string,
-	dnsPort int,
+	dnsPort int32,
 	config *cfg.Config,
 	seed string, // This needs to go away
 ) (*Node, error) {
@@ -149,8 +146,13 @@ func NewNode(
 
 	}
 
+	nodeAddress, err := utils.ResolveToMultiaddr(address, port)
+	if err != nil {
+		log.Fatalf("unable to resolve to multiaddr: %v", err)
+	}
+
 	host, err := libp2p.New(
-		libp2p.ListenAddrs(address),
+		libp2p.ListenAddrs(nodeAddress),
 		libp2p.Identity(privateKey),
 		// This as implication on DHT
 		libp2p.DisableRelay(),
@@ -159,52 +161,58 @@ func NewNode(
 		return nil, err
 	}
 
+	peer := &pb.PeerInfo{
+		Address: address,
+		Port:    port,
+		Mode:    mode,
+		Id:      host.ID().String(),
+	}
+
 	// If we don't have relaying, then the DHT is only good for Seeds/SuperNodes
 	//
 	// Create DHT for peer discovery
 	// dht, err := dht.New(ctx, host)
 	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to create DHT: %v", err)
+	// 	return nil, fmt.Errorf("failed to create DHT: %w", err)
 	// }
 
 	// Create pubsub for block propagation
 	ps, err := pubsub.NewGossipSub(ctx, host)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create pubsub: %v", err)
+		return nil, fmt.Errorf("failed to create pubsub: %w", err)
 	}
 
 	return &Node{
-		ctx: ctx,
-		// cancel:             cancel,
-		quit:               quit,
-		wg:                 wg,
-		cmd:                cmd,
-		address:            address,
-		port:               port,
-		mode:               mode,
-		dnsAddress:         dnsAddress,
-		dnsPort:            dnsPort,
-		p2pHost:            host,
-		pubSub:             ps,
-		topics:             make(PubSubTopics, 0),
-		subscriptions:      make(PubSubSubscription, 0),
-		privateKey:         privateKey,
-		publicKey:          publicKey,
-		sm:                 sm,
-		peers:              make(Peers, 0),
-		status:             &pb.Status{},
-		statusStorage:      sm.StatusStorage(),
-		blockStorage:       sm.BlockStorage(),
-		transactionStorage: sm.TransactionStorage(),
-		peerInfoStorage:    sm.PeerInfoStorage(),
-		seed:               seed,
+		// cmd:                   cmd,
+		ctx:                   ctx,
+		quit:                  quit,
+		wg:                    wg,
+		peer:                  peer,
+		dnsAddress:            dnsAddress,
+		dnsPort:               dnsPort,
+		p2pHost:               host,
+		pubSub:                ps,
+		topics:                make(PubSubTopics, 0),
+		subscriptions:         make(PubSubSubscription, 0),
+		privateKey:            privateKey,
+		publicKey:             publicKey,
+		sm:                    sm,
+		dnsPeers:              &pb.PeerList{},
+		seedPeers:             &pb.PeerList{},
+		nodePeers:             &pb.PeerList{},
+		status:                &pb.Status{},
+		statusStorage:         sm.StatusStorage(),
+		blockStorage:          sm.BlockStorage(),
+		transactionStorage:    sm.TransactionStorage(),
+		bannedPeerInfoStorage: sm.PeerInfoStorage(),
+		seed:                  seed,
 		// dht:           dht,
 	}, nil
 }
 
 func (n *Node) Start() {
 	defer n.wg.Done()
-	log.Infof("node starting in mode: %s", n.mode)
+	log.Infof("node starting in mode: %s", n.peer.Mode)
 
 	if err := n.startUp(); err != nil {
 		log.Errorf("failed calling startUp", err)
@@ -212,7 +220,7 @@ func (n *Node) Start() {
 		return
 	}
 
-	switch n.mode {
+	switch n.peer.Mode {
 	case cfg.NodeModeDNS:
 		n.runModeDNS()
 	case cfg.NodeModeSeed:
@@ -233,7 +241,7 @@ func (n *Node) Shutdown() {
 	close(*n.quit)
 
 	// See if there's custom  cleanup for each mode
-	switch n.mode {
+	switch n.peer.Mode {
 	case cfg.NodeModeDNS:
 		n.shutdownDNS()
 	case cfg.NodeModeSeed:
@@ -283,7 +291,7 @@ func (n *Node) propagateNewBlock(newblock *pb.BlocksSubscriptionNewBlock) error 
 	// Serialize the message
 	data, err := proto.Marshal(msg)
 	if err != nil {
-		return fmt.Errorf("failed to marshal block: %v", err)
+		return fmt.Errorf("failed to marshal block: %w", err)
 	}
 
 	// Publish to the network
@@ -430,13 +438,13 @@ func (n *Node) reScanBlockChain() error {
 		return &pb.Transaction{}
 	})
 	if err != nil {
-		return fmt.Errorf("could not retrieve transactions: %v", err)
+		return fmt.Errorf("could not retrieve transactions: %w", err)
 	}
 	for _, transaction := range transactions {
 		key := n.sm.BlockKey(transaction.BlockHeight)
 		ok, err := n.blockStorage.Has(key)
 		if err != nil {
-			return fmt.Errorf("error querying for block: %v", err)
+			return fmt.Errorf("error querying for block: %w", err)
 		}
 		if !ok {
 			return fmt.Errorf("found an orphan transaction: '%s'", transaction.Hash)

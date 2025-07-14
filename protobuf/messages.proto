@@ -38,6 +38,8 @@ message PeerInfo {
   int32 port = 2;
   string id = 3;
   string mode = 4;
+  bool connected = 5;
+  string direction = 6;
 }
 
 // Blocks Subscription
@@ -82,13 +84,13 @@ message NetworkMessage {
 
 // DNS
 message DNSPeerResponse {
-  repeated PeerInfo dns = 1;
+  repeated PeerInfo peers = 1;
 }
 
-message DNSSeedsResponse {
-  repeated PeerInfo seeds = 1;
-}
+// message DNSSeedsResponse {
+//   repeated PeerInfo seeds = 1;
+// }
 
-message DNSNodesResponse {
-  repeated PeerInfo nodes = 1;
-}
+// message DNSNodesResponse {
+//   repeated PeerInfo nodes = 1;
+// }
