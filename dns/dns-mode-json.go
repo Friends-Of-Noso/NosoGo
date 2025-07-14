@@ -1,7 +1,6 @@
 package dns
 
 import (
-	"encoding/json"
 	"net/http"
 
 	log "github.com/Friends-Of-Noso/NosoGo/logger"
@@ -34,12 +33,4 @@ func (dns *DNS) getNodesHandlerJSON(w http.ResponseWriter, r *http.Request) {
 	}
 
 	dns.nodes.WriteJSON(w)
-}
-
-// Helper to write JSON response
-func writeJSON(w http.ResponseWriter, data any) {
-	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(data); err != nil {
-		http.Error(w, "failed to encode to JSON", http.StatusInternalServerError)
-	}
 }
